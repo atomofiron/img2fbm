@@ -16,6 +16,7 @@ use image::codecs::pnm::ArbitraryTuplType::Grayscale;
 use image::ColorType::{Rgb8, Rgba8};
 use image::DynamicImage::ImageRgba8;
 use image::imageops::FilterType;
+use crate::core::background::Background;
 use crate::core::config::Cli;
 
 
@@ -44,14 +45,9 @@ const BYTE_LIMIT: u16 = 256;
 fn main() {
     let cli = Cli::parse();
 
-    let background = matches.get_one::<String>(ARG_BACKGROUND).unwrap();
-    let background_black = match background.as_str() {
-        BACKGROUND_BLACK => true,
-        BACKGROUND_WHITE => false,
-        _ => panic!("Unknown background value {}", background),
-    };
+    let make_background_black = matches!(cli.background, Background::Black);
 
-    let path_src = matches.get_one::<String>(ARG_INPUT_PATH).unwrap().to_string();
+    let path_src = cli.path.into_os_string().into_string().unwrap();
     let mut path_dst = path_src.clone();
     if path_dst.ends_with(EXT_PNG) {
         path_dst = format!("{}{}", path_dst.substring(0..(path_dst.len() - EXT_PNG.len())), EXT_BM);
@@ -71,7 +67,7 @@ fn main() {
             let src_x = x as i32 + x_offset;
             let mut make_black = false;
             if src_x < 0 || src_x >= image_width {
-                make_black = background_black;
+                make_black = make_background_black;
             } else {
                 //(make_black, lum_sum) = is_pixel_black(&resized, src_x as u32, y, 0.5, lum_sum);
                 make_black = is_pixel_black(&resized, src_x as u32, y);

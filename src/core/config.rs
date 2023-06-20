@@ -3,6 +3,7 @@ use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use clap::error::ErrorKind;
 use clap::{CommandFactory, Parser};
+use crate::core::background::Background;
 
 const THRESHOLD_RANGE_OP: &str = "..=";
 
@@ -35,9 +36,9 @@ pub struct Cli {
     #[arg(short, long)]
     pub inverse: bool,
 
-    /// Inverse output pixels
+    /// Set background pixels color
     #[arg(short, long)]
-    pub background: bool,
+    pub background: Background,
 
     /// Threshold value or range of pixel brightness as a percentage, like 20:80, 40:, :60, 50:50 or 50
     #[arg(
@@ -48,12 +49,6 @@ pub struct Cli {
         value_parser = str_to_threshold,
     )]
     pub threshold: RangeInc,
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-enum Background {
-    White,
-    Black,
 }
 
 fn str_to_threshold(value: &str) -> Result<RangeInc, String> {
