@@ -1,4 +1,4 @@
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Display, Result, Debug, Formatter};
 use clap::builder::PossibleValue;
 use clap::ValueEnum;
 
@@ -21,25 +21,22 @@ impl ValueEnum for Background {
     }
 }
 
-impl std::fmt::Display for Background {
+impl Display for Background {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let str = self.to_possible_value()
-            .expect("no values are skipped")
-            .get_name();
-        Debug::fmt(str, f)
+        write!(f, "{:?}", self)
     }
 }
 
 impl Debug for Background {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(self, f)
+        Display::fmt(self, f)
     }
 }
 
 impl std::str::FromStr for Background {
     type Err = String;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         for variant in Self::value_variants() {
             if variant.to_possible_value().unwrap().matches(s, false) {
                 return Ok(*variant);
