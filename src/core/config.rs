@@ -36,9 +36,12 @@ pub struct Cli {
     #[arg(short, long)]
     pub inverse: bool,
 
-    /// Set background pixels color
+    /// Set background pixels visible
     #[arg(short, long)]
-    pub background: Background,
+    pub background: Option<Background>,
+    // thread 'main' has overflowed its stack
+    // fatal runtime error: stack overflow
+    // caused by default_value_t = Background::Invisible
 
     /// Threshold value or range of pixel brightness as a percentage, like 20:80, 40:, :60, 50:50 or 50
     #[arg(

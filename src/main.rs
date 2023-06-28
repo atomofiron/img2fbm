@@ -20,23 +20,14 @@ use crate::core::background::Background;
 use crate::core::config::Cli;
 
 
-const ARG_INPUT_PATH: &str = "input_path";
 const ARG_THRESHOLD: &str = "threshold";
-const ARG_HEIGHT: &str = "height";
 const ARG_PREVIEW: &str = "preview";
-const ARG_INVERSE: &str = "inverse";
-const ARG_BACKGROUND: &str = "background";
 const ARG_REMOVE_BACKGROUND: &str = "remove_background_color";
-
-const BACKGROUND_WHITE: &str = "white";
-const BACKGROUND_BLACK: &str = "black";
 
 const EXT_PNG: &str = ".png";
 const EXT_BM: &str = ".bm";
 
 const TARGET_WIDTH: u32 = 128;
-const MAX_HEIGHT: u32 = 64;
-const MAX_HEIGHT_STR: &str = "64";
 
 const CHANNEL_MAX: f32 = 255.0;
 const BYTE_MAX: u8 = 255;
@@ -45,7 +36,11 @@ const BYTE_LIMIT: u16 = 256;
 fn main() {
     let cli = Cli::parse();
 
-    let make_background_black = matches!(cli.background, Background::Black);
+    let make_background_visible = match cli.background {
+        None => false,
+        Some(Background::Visible) => true,
+        Some(Background::Invisible) => false,
+    };
 
     let path_src = cli.path.into_os_string().into_string().unwrap();
     let mut path_dst = path_src.clone();
@@ -65,21 +60,21 @@ fn main() {
     for y in 0..cli.height {
         for x in 0..TARGET_WIDTH {
             let src_x = x as i32 + x_offset;
-            let mut make_black = false;
+            let mut make_visible = false;
             if src_x < 0 || src_x >= image_width {
-                make_black = make_background_black;
+                make_visible = make_background_visible;
             } else {
-                //(make_black, lum_sum) = is_pixel_black(&resized, src_x as u32, y, 0.5, lum_sum);
-                make_black = is_pixel_black(&resized, src_x as u32, y);
+                //(make_visible, lum_sum) = is_pixel_black(&resized, src_x as u32, y, 0.5, lum_sum);
+                make_visible = is_pixel_black(&resized, src_x as u32, y);
             }
             if cli.inverse {
-                make_black = !make_black;
+                make_visible = !make_visible;
             }
-            if make_black {
+            if make_visible {
                 chunk += 1u8.shl(current_bit);
             }
             /*if let Some(preview) = &mut preview {
-                let value = if make_black { 0u8 } else { 255u8 };
+                let value = if make_visible { 0u8 } else { 255u8 };
                 preview.put_pixel(x, y, Luma([value]))
             }*/
             current_bit += 1;
@@ -122,7 +117,7 @@ fn save_preview(img: &RgbImage, name: &str) {
     ).unwrap();
 }
 
-fn graphic(matches: &ArgMatches, mut image: DynamicImage, height: u32, background_black: bool) {
+fn graphic(matches: &ArgMatches, mut image: DynamicImage, height: u32, background_visible: bool) {
     let bg_color = matches.get_one::<String>(ARG_REMOVE_BACKGROUND)
         .map(|it| Color::parse(color_to_u32(it.as_str())));
     let threshold = matches.get_one::<String>(ARG_THRESHOLD).unwrap()
@@ -133,7 +128,7 @@ fn graphic(matches: &ArgMatches, mut image: DynamicImage, height: u32, backgroun
     let with_preview = matches.get_count(ARG_PREVIEW) > 0;
 
     if let Some(color) = bg_color {
-        remove_background(&mut image, color, background_black);
+        remove_background(&mut image, color, background_visible);
         if with_preview {
             save_preview(&image.to_rgb8(), "removed.png");
         }
@@ -263,8 +258,8 @@ fn disagreement(image: &mut DynamicImage) {
     }
 }
 
-fn remove_background(image: &mut DynamicImage, color: Color, to_black: bool) {
-    let target: u8 = if to_black { 0 } else { 255 };
+fn remove_background(image: &mut DynamicImage, color: Color, to_visible: bool) {
+    let target: u8 = if to_visible { 0 } else { 255 };
     for_each_mut(image, |image, pixel| {
         let r = pixel[0];
         let g = pixel[1];
