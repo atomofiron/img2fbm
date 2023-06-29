@@ -1,11 +1,8 @@
-use std::fmt::{Debug, Display, Formatter};
-use std::ops::RangeInclusive;
+use std::fmt::Debug;
 use std::path::PathBuf;
-use clap::error::ErrorKind;
 use clap::{CommandFactory, Parser};
 use crate::core::background::Background;
-
-const THRESHOLD_RANGE_OP: &str = "..=";
+use crate::core::threshold::{RangeInc, THRESHOLD_RANGE_OP};
 
 #[derive(Debug, Parser)]
 
@@ -71,42 +68,4 @@ fn str_to_threshold(value: &str) -> Result<RangeInc, String> {
     let first: u8 = first.parse().map_err(mapper)?;
     let second: u8 = second.parse().map_err(mapper)?;
     Ok(RangeInc(first..=second))
-}
-
-pub struct RangeInc(RangeInclusive<u8>);
-
-impl RangeInc {
-    fn start(&self) -> u8 {
-        *self.0.start()
-    }
-    fn end(&self) -> u8 {
-        *self.0.end()
-    }
-}
-
-impl Display for RangeInc {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}{}{}", self.start(), THRESHOLD_RANGE_OP, self.end())
-    }
-}
-
-impl Debug for RangeInc {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(self, f)
-    }
-}
-
-impl Clone for RangeInc {
-    fn clone(&self) -> Self {
-        RangeInc(self.0.clone())
-    }
-}
-
-fn verify_argument<T>(result: Result<T, String>) -> T {
-    if result.is_err() {
-        Cli::command()
-            .error(ErrorKind::ArgumentConflict, result.err().unwrap())
-            .exit();
-    }
-    return result.unwrap();
 }
