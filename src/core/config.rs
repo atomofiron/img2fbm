@@ -23,7 +23,7 @@ pub struct Cli {
         value_parser = clap::value_parser!(u8).range(1..=64),
         default_value_t = 64,
     )]
-    pub height: u32,
+    pub height: u8,
 
     /// Generate the previews of result pictures
     #[arg(short, long)]

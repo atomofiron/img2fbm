@@ -16,7 +16,9 @@ use image::codecs::pnm::ArbitraryTuplType::Grayscale;
 use image::ColorType::{Rgb8, Rgba8};
 use image::DynamicImage::ImageRgba8;
 use image::imageops::FilterType;
+use regex::Regex;
 use crate::core::background::Background;
+use crate::core::bitmap::Bitmap;
 use crate::core::config::Cli;
 
 
@@ -24,10 +26,13 @@ const ARG_THRESHOLD: &str = "threshold";
 const ARG_PREVIEW: &str = "preview";
 const ARG_REMOVE_BACKGROUND: &str = "remove_background_color";
 
-const EXT_PNG: &str = ".png";
+const DOT: char = '.';
+const SLASH: char = '/';
+
+const EXT_PICTURE: &str = r"(.png|.jpg|.jpeg|.jpeg)$";
 const EXT_BM: &str = ".bm";
 
-const TARGET_WIDTH: u32 = 128;
+const TARGET_WIDTH: u8 = 128;
 
 const CHANNEL_MAX: f32 = 255.0;
 const BYTE_MAX: u8 = 255;
@@ -44,39 +49,44 @@ fn main() {
 
     let path_src = cli.path.into_os_string().into_string().unwrap();
     let mut path_dst = path_src.clone();
-    if path_dst.ends_with(EXT_PNG) {
-        path_dst = format!("{}{}", path_dst.substring(0..(path_dst.len() - EXT_PNG.len())), EXT_BM);
+    let last_dot = path_dst.signed_last_index_of(DOT);
+    let last_slash = path_dst.signed_last_index_of(SLASH);
+    if last_dot > last_slash + 1 {
+        path_dst = format!("{}{}", path_dst.substring(0..(last_dot as usize)), EXT_BM);
     }
+    let ext_picture = Regex::new(EXT_PICTURE).unwrap();
+    if ext_picture.is_match(path_src.as_str()) {
+        let image = image::open(path_src).unwrap().to_rgb8();
+        let bitmap = img2bm(image, cli.height, cli.inverse, make_background_visible);
 
-    let resized = image::open(path_src).unwrap().to_rgb8();
+        let mut file_dst = File::create(path_dst).unwrap();
+        file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
+    }
+}
 
-    let x_offset = (resized.width() as i32 - TARGET_WIDTH as i32) / 2;
-    let image_width = resized.width() as i32;
+fn img2bm(image: RgbImage, height: u8, inverse: bool, visible_background: bool) -> Bitmap {
+    let x_offset = (image.width() as i32 - TARGET_WIDTH as i32) / 2;
+    let image_width = image.width() as i32;
     let mut chunk = 0u8;
     let mut current_bit = 0u8;
     let mut bytes = Vec::<u8>::new();
     bytes.push(0x00);
     let mut lum_sum: f32 = 0.0;
-    for y in 0..cli.height {
+    for y in 0..height {
         for x in 0..TARGET_WIDTH {
             let src_x = x as i32 + x_offset;
             let mut make_visible = false;
             if src_x < 0 || src_x >= image_width {
-                make_visible = make_background_visible;
+                make_visible = visible_background;
             } else {
-                //(make_visible, lum_sum) = is_pixel_black(&resized, src_x as u32, y, 0.5, lum_sum);
-                make_visible = is_pixel_black(&resized, src_x as u32, y);
+                make_visible = is_pixel_black(&image, src_x as u32, y as u32);
             }
-            if cli.inverse {
+            if inverse {
                 make_visible = !make_visible;
             }
             if make_visible {
                 chunk += 1u8.shl(current_bit);
             }
-            /*if let Some(preview) = &mut preview {
-                let value = if make_visible { 0u8 } else { 255u8 };
-                preview.put_pixel(x, y, Luma([value]))
-            }*/
             current_bit += 1;
             if current_bit == 8 {
                 bytes.push(chunk);
@@ -91,6 +101,18 @@ fn main() {
         }
     }
 
+    Bitmap {
+        width: TARGET_WIDTH,
+        height,
+        bytes,
+    }
+}
+
+fn bm2preview(bitmap: Bitmap) {
+    /*if let Some(preview) = &mut preview {
+        let value = if make_visible { 0u8 } else { 255u8 };
+        preview.put_pixel(x, y, Luma([value]))
+    }*/
     /*if let Some(preview) = preview {
         image::save_buffer_with_format(
             "preview.png",
@@ -101,9 +123,6 @@ fn main() {
             ImageFormat::Png,
         ).unwrap();
     }*/
-
-    let mut file_dst = File::create(path_dst).unwrap();
-    file_dst.write_all(bytes.as_slice()).unwrap();
 }
 
 fn save_preview(img: &RgbImage, name: &str) {
@@ -150,7 +169,7 @@ fn graphic(matches: &ArgMatches, mut image: DynamicImage, height: u32, backgroun
     }
 
     let mut preview = match with_preview {
-        true => Some(DynamicImage::ImageLuma8(GrayImage::new(TARGET_WIDTH, height)).to_luma8()),
+        true => Some(DynamicImage::ImageLuma8(GrayImage::new(TARGET_WIDTH as u32, height)).to_luma8()),
         _ => None
     };
 }
@@ -338,10 +357,30 @@ fn lum_sum(image: &RgbImage, x: i32, y: i32) -> f32 {
 
 trait StringUtil {
     fn substring(&self, range: Range<usize>) -> Self;
+    fn index_of(&self, char: char) -> Option<usize>;
+    fn signed_index_of(&self, char: char) -> i32;
+    fn last_index_of(&self, char: char) -> Option<usize>;
+    fn signed_last_index_of(&self, char: char) -> i32;
 }
 
 impl StringUtil for String {
     fn substring(&self, range: Range<usize>) -> Self {
         String::from(&self[range])
+    }
+
+    fn index_of(&self, char: char) -> Option<usize> {
+        self.chars().position(|c| c == char)
+    }
+
+    fn signed_index_of(&self, char: char) -> i32 {
+        self.index_of(char).map_or_else(|| -1, |i| i as i32)
+    }
+
+    fn last_index_of(&self, char: char) -> Option<usize> {
+        self.chars().rev().position(|c| c == char).map(|i| self.len() - 1 - i)
+    }
+
+    fn signed_last_index_of(&self, char: char) -> i32 {
+        self.last_index_of(char).map_or_else(|| -1, |i| i as i32)
     }
 }
