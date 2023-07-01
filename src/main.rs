@@ -19,6 +19,7 @@ use image::imageops::FilterType;
 use regex::Regex;
 use crate::core::background::Background;
 use crate::core::bitmap::Bitmap;
+use crate::core::color::Color;
 use crate::core::config::Cli;
 use crate::core::img2bm::img2bm;
 
@@ -34,8 +35,6 @@ const EXT_PICTURE: &str = r"(.png|.jpg|.jpeg|.jpeg)$";
 const EXT_BM: &str = ".bm";
 
 pub const TARGET_WIDTH: u8 = 128;
-
-const BYTE_LIMIT: u16 = 256;
 
 fn main() {
     let cli = Cli::parse();
@@ -127,23 +126,6 @@ fn graphic(matches: &ArgMatches, mut image: DynamicImage, height: u32, backgroun
         true => Some(DynamicImage::ImageLuma8(GrayImage::new(TARGET_WIDTH as u32, height)).to_luma8()),
         _ => None
     };
-}
-
-struct Color {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-}
-
-impl Color {
-    pub fn parse(value: u32) -> Color {
-        let limit = BYTE_LIMIT as u32;
-        Color {
-            r: (value / limit.pow(2) % limit) as u8,
-            g: (value / limit % limit.pow(2)) as u8,
-            b: (value % limit.pow(3)) as u8,
-        }
-    }
 }
 
 fn try_get_pixel<T>(image: &T, x: i32, y: i32) -> Option<T::Pixel>
