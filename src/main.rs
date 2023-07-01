@@ -6,7 +6,7 @@ use std::ffi::OsStr;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Write;
 use std::num::{IntErrorKind, ParseIntError};
-use std::ops::{Range, RangeInclusive, RangeTo, Rem, Shl, Shr};
+use std::ops::{Rem, Shl, Shr};
 use std::path::PathBuf;
 use clap::{Parser, Arg, ArgAction, ArgMatches, Command, CommandFactory};
 use clap::error::ErrorKind;
@@ -22,6 +22,7 @@ use crate::core::bitmap::Bitmap;
 use crate::core::color::Color;
 use crate::core::config::Cli;
 use crate::core::img2bm::img2bm;
+use crate::core::string_util::StringUtil;
 
 
 const ARG_THRESHOLD: &str = "threshold";
@@ -240,36 +241,4 @@ fn color_to_u32(color: &str) -> u32 {
         color_int += 0xff000000;
     }
     return color_int
-}
-
-
-
-trait StringUtil {
-    fn substring(&self, range: Range<usize>) -> Self;
-    fn index_of(&self, char: char) -> Option<usize>;
-    fn signed_index_of(&self, char: char) -> i32;
-    fn last_index_of(&self, char: char) -> Option<usize>;
-    fn signed_last_index_of(&self, char: char) -> i32;
-}
-
-impl StringUtil for String {
-    fn substring(&self, range: Range<usize>) -> Self {
-        String::from(&self[range])
-    }
-
-    fn index_of(&self, char: char) -> Option<usize> {
-        self.chars().position(|c| c == char)
-    }
-
-    fn signed_index_of(&self, char: char) -> i32 {
-        self.index_of(char).map_or_else(|| -1, |i| i as i32)
-    }
-
-    fn last_index_of(&self, char: char) -> Option<usize> {
-        self.chars().rev().position(|c| c == char).map(|i| self.len() - 1 - i)
-    }
-
-    fn signed_last_index_of(&self, char: char) -> i32 {
-        self.last_index_of(char).map_or_else(|| -1, |i| i as i32)
-    }
 }
