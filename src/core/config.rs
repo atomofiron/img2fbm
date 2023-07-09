@@ -10,6 +10,7 @@ use crate::core::threshold::{RangeInc, THRESHOLD_RANGE_OP};
 #[command(author = "Nesterov Y. <atomofiron@gmail.com>")]
 #[command(version = "1.0")]
 #[command(about = "Flipper bitmap files generator", long_about = None)]
+#[command(arg_required_else_help = true)]
 pub struct Cli {
     /// Path to png|jpg|gif file
     pub path: PathBuf,
@@ -45,7 +46,7 @@ pub struct Cli {
         short,
         long,
         value_name = "percentage[:percentage]",
-        default_value_t = RangeInc(40..=60),
+        default_value_t = RangeInc(20..=80),
         value_parser = str_to_threshold,
     )]
     pub threshold: RangeInc,
@@ -56,16 +57,19 @@ fn str_to_threshold(value: &str) -> Result<RangeInc, String> {
     // seems like clap contains a bug
     let parts2 = value.split(THRESHOLD_RANGE_OP).collect::<Vec<&str>>();
     let parts = if parts.len() > parts2.len() { parts } else { parts2 };
-    let mapper = || format!("'{value}' isn't a valid range");
+    let cause = || format!("'{value}' isn't a valid range");
     if parts.len() > 2 {
-        return Err(mapper())
+        return Err(cause())
     }
     let first = parts[0];
     let first = if first.is_empty() { "0" } else { first };
     let second = *parts.get(1).unwrap_or(&first);
     let second = if second.is_empty() { "100" } else { second };
-    let mapper = |_| mapper();
+    let mapper = |_| cause();
     let first: u8 = first.parse().map_err(mapper)?;
     let second: u8 = second.parse().map_err(mapper)?;
+    if first > second {
+        return Err(cause());
+    }
     Ok(RangeInc(first..=second))
 }

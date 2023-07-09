@@ -1,13 +1,20 @@
 use std::ops::Shl;
 use image::RgbImage;
 use crate::core::bitmap::Bitmap;
+use crate::core::threshold::RangeInc;
 use crate::TARGET_WIDTH;
 
 
 const CHANNEL_MAX: f32 = 255.0;
 const BYTE_MAX: u8 = 255;
 
-pub fn img2bm(image: RgbImage, height: u8, inverse: bool, visible_background: bool) -> Bitmap {
+pub fn img2bm(
+    image: RgbImage,
+    height: u8,
+    inverse: bool,
+    visible_background: bool,
+    threshold: &RangeInc,
+) -> Bitmap {
     let x_offset = (image.width() as i32 - TARGET_WIDTH as i32) / 2;
     let image_width = image.width() as i32;
     let mut chunk = 0u8;
@@ -22,7 +29,7 @@ pub fn img2bm(image: RgbImage, height: u8, inverse: bool, visible_background: bo
             if src_x < 0 || src_x >= image_width {
                 make_visible = visible_background;
             } else {
-                make_visible = is_pixel_black(&image, src_x as u32, y as u32);
+                make_visible = is_pixel_black(&image, src_x as u32, y as u32, &threshold);
             }
             if inverse {
                 make_visible = !make_visible;
@@ -51,15 +58,26 @@ pub fn img2bm(image: RgbImage, height: u8, inverse: bool, visible_background: bo
     }
 }
 
-fn is_pixel_black(image: &RgbImage, x: u32, y: u32) -> bool {
+fn is_pixel_black(image: &RgbImage, x: u32, y: u32, threshold: &RangeInc) -> bool {
     let pixel = image.get_pixel(x, y).0;
     let r = pixel[0] as f32 / CHANNEL_MAX;
     let g = pixel[1] as f32 / CHANNEL_MAX;
     let b = pixel[2] as f32 / CHANNEL_MAX;
 
     let luminance = (0.299 * r * r + 0.587 * g * g + 0.114 * b * b).sqrt();
-    return luminance < 0.5
+    if !threshold.is_max() {
+        let luminance = (luminance * 100.0) as u8;
+        if luminance > threshold.end() {
+            return false
+        } else if luminance < threshold.start() {
+            return true
+        }
+    }
+    let rnd = rand::random::<f32>();
+    return rnd > luminance;
 }
+
+// unused:
 
 fn is_pixel_black2(image: &RgbImage, x: u32, y: u32, threshold: f32, sum: f32) -> (bool, f32) {
     let pixel = image.get_pixel(x, y).0;

@@ -7,11 +7,17 @@ pub const THRESHOLD_RANGE_OP: &str = "..=";
 pub struct RangeInc(pub RangeInclusive<u8>);
 
 impl RangeInc {
-    fn start(&self) -> u8 {
+
+    pub fn start(&self) -> u8 {
         *self.0.start()
     }
-    fn end(&self) -> u8 {
+
+    pub fn end(&self) -> u8 {
         *self.0.end()
+    }
+
+    pub fn is_max(&self) -> bool {
+        *self.0.start() == 0 && *self.0.end() == 100
     }
 }
 
