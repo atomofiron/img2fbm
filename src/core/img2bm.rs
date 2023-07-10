@@ -1,5 +1,5 @@
 use std::ops::Shl;
-use image::RgbImage;
+use image::RgbaImage;
 use crate::core::bitmap::Bitmap;
 use crate::core::threshold::RangeInc;
 use crate::TARGET_WIDTH;
@@ -9,7 +9,7 @@ const CHANNEL_MAX: f32 = 255.0;
 const BYTE_MAX: u8 = 255;
 
 pub fn img2bm(
-    image: RgbImage,
+    image: &RgbaImage,
     height: u8,
     inverse: bool,
     visible_background: bool,
@@ -58,13 +58,14 @@ pub fn img2bm(
     }
 }
 
-fn is_pixel_black(image: &RgbImage, x: u32, y: u32, threshold: &RangeInc) -> bool {
+fn is_pixel_black(image: &RgbaImage, x: u32, y: u32, threshold: &RangeInc) -> bool {
     let pixel = image.get_pixel(x, y).0;
     let r = pixel[0] as f32 / CHANNEL_MAX;
     let g = pixel[1] as f32 / CHANNEL_MAX;
     let b = pixel[2] as f32 / CHANNEL_MAX;
+    let a = pixel[3] as f32 / CHANNEL_MAX;
 
-    let luminance = (0.299 * r * r + 0.587 * g * g + 0.114 * b * b).sqrt();
+    let luminance = (0.299 * r * r + 0.587 * g * g + 0.114 * b * b).sqrt() * a;
     if !threshold.is_max() {
         let luminance = (luminance * 100.0) as u8;
         if luminance > threshold.end() {
@@ -79,7 +80,7 @@ fn is_pixel_black(image: &RgbImage, x: u32, y: u32, threshold: &RangeInc) -> boo
 
 // unused:
 
-fn is_pixel_black2(image: &RgbImage, x: u32, y: u32, threshold: f32, sum: f32) -> (bool, f32) {
+fn is_pixel_black2(image: &RgbaImage, x: u32, y: u32, threshold: f32, sum: f32) -> (bool, f32) {
     let pixel = image.get_pixel(x, y).0;
     let r = pixel[0] as f32 / CHANNEL_MAX;
     let g = pixel[1] as f32 / CHANNEL_MAX;
@@ -94,7 +95,7 @@ fn is_pixel_black2(image: &RgbImage, x: u32, y: u32, threshold: f32, sum: f32) -
     }
 }
 
-fn lum_sum(image: &RgbImage, x: i32, y: i32) -> f32 {
+fn lum_sum(image: &RgbaImage, x: i32, y: i32) -> f32 {
     let width = image.width() as i32;
     let height = image.height() as i32;
     let mut sum = 0.0;

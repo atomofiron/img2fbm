@@ -1,9 +1,9 @@
 mod core;
 
-use std::fs::{File, OpenOptions};
+use std::fs::{create_dir, create_dir_all, File, OpenOptions};
 use std::{env, fs, io};
 use std::ffi::OsStr;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Display, format, Formatter};
 use std::io::Write;
 use std::num::{IntErrorKind, ParseIntError};
 use std::ops::{Rem, Shl, Shr};
@@ -24,6 +24,10 @@ use crate::core::config::Cli;
 use crate::core::img2bm::img2bm;
 use crate::core::string_util::StringUtil;
 
+use image::codecs::gif::{GifDecoder, GifEncoder};
+use image::{ImageDecoder, AnimationDecoder};
+use crate::core::path_ext::PathExt;
+
 
 const ARG_THRESHOLD: &str = "threshold";
 const ARG_PREVIEW: &str = "preview";
@@ -32,10 +36,10 @@ const ARG_REMOVE_BACKGROUND: &str = "remove_background_color";
 const DOT: char = '.';
 const SLASH: char = '/';
 
-const EXT_PICTURE: &str = r"(.png|.jpg|.jpeg|.jpeg)$";
-const EXT_BM: &str = ".bm";
-const EXT_PNG: &str = ".png";
-const EXT_GIF: &str = ".gif";
+const EXT_PICTURE: [&str; 3] = ["png", "jpg", "jpeg"];
+const EXT_BM: &str = "bm";
+const EXT_PNG: &str = "png";
+const EXT_GIF: &str = "gif";
 
 pub const TARGET_WIDTH: u8 = 128;
 
@@ -48,29 +52,47 @@ fn main() {
         Some(Background::Invisible) => false,
     };
 
-    let path_src = cli.path.into_os_string().into_string().unwrap();
-    let mut path_dst = path_src.clone();
-    let mut preview_path = path_src.clone();
-    let last_dot = path_dst.signed_last_index_of(DOT);
-    let last_slash = path_dst.signed_last_index_of(SLASH);
-    if last_dot > last_slash + 1 {
-        path_dst = path_dst.substring(0..(last_dot as usize));
-        preview_path = path_dst.clone();
-    }
-    path_dst = format!("{}{}", path_dst, EXT_BM);
-    preview_path = format!("{}_preview{}", preview_path, EXT_PNG);
-    let ext_picture = Regex::new(EXT_PICTURE).unwrap();
+    let path_src = cli.path.to_string();
+    let path_name = cli.path.get_path_name();
+    let input_ext = cli.path.get_ext().to_lowercase();
+    let preview_path_name = format!("{}_preview", cli.path.get_path_name());
 
-    if ext_picture.is_match(path_src.as_str()) {
-        let image = image::open(path_src).unwrap().to_rgb8();
-        let bitmap = img2bm(image, cli.height, cli.inverse, make_background_visible, &cli.threshold);
+    if EXT_PICTURE.contains(&input_ext.as_str()) {
+        let image = image::open(path_src).unwrap().to_rgba8();
+        let bitmap = img2bm(&image, cli.height, cli.inverse, make_background_visible, &cli.threshold);
 
-        let mut file_dst = File::create(path_dst).unwrap();
+        let path_bm = format!("{}.{}", path_name, EXT_BM);
+        let mut file_dst = File::create(path_bm).unwrap();
         file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
 
         if cli.preview {
             let preview = bm2preview(&bitmap);
+            let preview_path = format!("{}.{}", preview_path_name, EXT_PNG);
             save_preview(&preview, preview_path.as_str());
+        }
+    } else if input_ext.as_str() == EXT_GIF {
+        let mut preview_frames = Vec::<GrayImage>::new();
+        let file = File::open(path_src).unwrap();
+        let mut decoder = GifDecoder::new(file).unwrap();
+        let mut count = 0u32;
+        for frame in decoder.into_frames() {
+            // todo use rayon
+            let image = frame.unwrap().buffer().to_owned();
+            let bitmap = img2bm(&image, cli.height, cli.inverse, make_background_visible, &cli.threshold);
+
+            if cli.preview {
+                preview_frames.push(bm2preview(&bitmap));
+            }
+
+            create_dir_all(path_name.as_str()).unwrap();
+            let path_dst = format!("{}/frame_{}.{}", path_name, count, EXT_BM);
+            let mut file_dst = File::create(path_dst).unwrap();
+            file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
+            count += 1;
+        }
+        if cli.preview {
+            let preview_path = format!("{}.{}", preview_path_name, EXT_GIF);
+            preview_frames;
         }
     }
 }
