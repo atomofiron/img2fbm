@@ -67,7 +67,6 @@ fn is_pixel_black(image: &RgbaImage, x: u32, y: u32, threshold: &RangeInc) -> bo
 
     let luminance = (0.299 * r * r + 0.587 * g * g + 0.114 * b * b).sqrt() * a;
     if !threshold.is_max() {
-        let luminance = (luminance * 100.0) as u8;
         if luminance > threshold.end() {
             return false
         } else if luminance < threshold.start() {
@@ -75,7 +74,8 @@ fn is_pixel_black(image: &RgbaImage, x: u32, y: u32, threshold: &RangeInc) -> bo
         }
     }
     let rnd = rand::random::<f32>();
-    return rnd > luminance;
+    let threshold = threshold.start() + threshold.size() * rnd;
+    return threshold > luminance;
 }
 
 // unused:
