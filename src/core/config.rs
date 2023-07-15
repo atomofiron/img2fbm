@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 use std::path::PathBuf;
 use clap::{CommandFactory, Parser};
+use regex::Regex;
 use crate::core::background::Background;
 use crate::core::threshold::{RangeInc, THRESHOLD_RANGE_OP};
 
@@ -46,30 +47,40 @@ pub struct Cli {
         short,
         long,
         value_name = "percentage[:percentage]",
-        default_value_t = RangeInc(20..=80),
+        default_value_t = RangeInc(0.2..=0.8),
         value_parser = str_to_threshold,
     )]
     pub threshold: RangeInc,
 }
 
 fn str_to_threshold(value: &str) -> Result<RangeInc, String> {
-    let parts = value.split(':').collect::<Vec<&str>>();
     // seems like clap contains a bug
-    let parts2 = value.split(THRESHOLD_RANGE_OP).collect::<Vec<&str>>();
-    let parts = if parts.len() > parts2.len() { parts } else { parts2 };
+    let pattern = Regex::new(r":|\.\.=").unwrap();
+    let parts = pattern.split(value).collect::<Vec<&str>>();
     let cause = || format!("'{value}' isn't a valid range");
-    if parts.len() > 2 {
-        return Err(cause())
-    }
-    let first = parts[0];
-    let first = if first.is_empty() { "0" } else { first };
-    let second = *parts.get(1).unwrap_or(&first);
-    let second = if second.is_empty() { "100" } else { second };
-    let mapper = |_| cause();
-    let first: u8 = first.parse().map_err(mapper)?;
-    let second: u8 = second.parse().map_err(mapper)?;
-    if first > second {
+    if parts.is_empty() || parts.len() > 2 {
         return Err(cause());
     }
-    Ok(RangeInc(first..=second))
+    let first = if value.is_empty() { 0.0 } else {
+        parse(*parts.first().unwrap()).map_err(|_| cause())?
+    };
+    if parts.len() == 1 {
+        return Ok(RangeInc(first..=first))
+    }
+    let second = if value.is_empty() { 1.0 } else {
+        parse(*parts.last().unwrap()).map_err(|_| cause())?
+    };
+    return Ok(RangeInc(first..=second));
+}
+
+fn parse(value: &str) -> Result<f32, ()> {
+    let int = value.parse::<u8>();
+    if let Ok(value) = int {
+        return Ok(value as f32 / 100.0);
+    }
+    let float = value.parse::<f32>();
+    if let Ok(value) = float {
+        return Ok(value);
+    }
+    return Err(());
 }

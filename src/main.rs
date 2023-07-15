@@ -16,7 +16,6 @@ use image::codecs::pnm::ArbitraryTuplType::Grayscale;
 use image::ColorType::{Rgb8, Rgba8};
 use image::DynamicImage::ImageRgba8;
 use image::imageops::FilterType;
-use regex::Regex;
 use crate::core::background::Background;
 use crate::core::bitmap::Bitmap;
 use crate::core::color::Color;
