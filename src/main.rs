@@ -45,6 +45,8 @@ pub const TARGET_WIDTH: u8 = 128;
 fn main() {
     let cli = Cli::parse();
 
+    cli.path.file_name().expect("invalid input file path");
+
     let make_background_visible = match cli.background {
         None => false,
         Some(Background::Visible) => true,
