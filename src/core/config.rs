@@ -61,14 +61,16 @@ fn str_to_threshold(value: &str) -> Result<RangeInc, String> {
     if parts.is_empty() || parts.len() > 2 {
         return Err(cause());
     }
+    let first = *parts.first().unwrap();
     let first = if value.is_empty() { 0.0 } else {
-        parse(*parts.first().unwrap()).map_err(|_| cause())?
+        parse(first).map_err(|_| cause())?
     };
     if parts.len() == 1 {
         return Ok(RangeInc(first..=first))
     }
-    let second = if value.is_empty() { 1.0 } else {
-        parse(*parts.last().unwrap()).map_err(|_| cause())?
+    let second = *parts.last().unwrap();
+    let second = if second.is_empty() { 1.0 } else {
+        parse(second).map_err(|_| cause())?
     };
     return Ok(RangeInc(first..=second));
 }
