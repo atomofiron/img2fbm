@@ -16,9 +16,9 @@ impl PathExt for PathBuf {
     }
 
     fn get_path_name(&self) -> String {
-        let parent = self.parent().unwrap().to_str().unwrap();
-        let name = self.file_name().unwrap().to_str().unwrap();
-        format!("{}/{}", parent, name)
+        let path = self.to_str().unwrap();
+        let ext = self.file_name().unwrap();
+        return String::from(&path[..(path.len() - ext.len())]);
     }
 
     fn get_name(&self) -> String {
