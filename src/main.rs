@@ -10,7 +10,7 @@ use std::ops::{Rem, Shl, Shr};
 use std::path::PathBuf;
 use clap::{Parser, Arg, ArgAction, ArgMatches, Command, CommandFactory};
 use clap::error::ErrorKind;
-use image::{ColorType, DynamicImage, GenericImage, GenericImageView, GrayImage, ImageFormat, Luma, Rgba, RgbImage};
+use image::{ColorType, DynamicImage, Frame, GenericImage, GenericImageView, GrayImage, ImageFormat, Luma, Rgba, RgbImage};
 use image::codecs::pnm::ArbitraryTuplType;
 use image::codecs::pnm::ArbitraryTuplType::Grayscale;
 use image::ColorType::{Rgb8, Rgba8};
@@ -23,7 +23,7 @@ use crate::core::config::Cli;
 use crate::core::img2bm::img2bm;
 use crate::core::string_util::StringUtil;
 
-use image::codecs::gif::{GifDecoder, GifEncoder};
+use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::{ImageDecoder, AnimationDecoder};
 use crate::core::path_ext::PathExt;
 
@@ -62,13 +62,13 @@ fn main() {
         let image = image::open(path_src).unwrap().to_rgba8();
         let bitmap = img2bm(&image, cli.height, cli.inverse, make_background_visible, &cli.threshold);
 
-        let path_bm = format!("{}.{}", path_name, EXT_BM);
+        let path_bm = format!("{path_name}.{EXT_BM}");
         let mut file_dst = File::create(path_bm).unwrap();
         file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
 
         if cli.preview {
             let preview = bm2preview(&bitmap);
-            let preview_path = format!("{}.{}", preview_path_name, EXT_PNG);
+            let preview_path = format!("{preview_path_name}.{EXT_PNG}");
             save_preview(&preview, preview_path.as_str());
         }
     } else if input_ext.as_str() == EXT_GIF {
@@ -86,15 +86,26 @@ fn main() {
             }
 
             create_dir_all(path_name.as_str()).unwrap();
-            let path_dst = format!("{}/frame_{}.{}", path_name, count, EXT_BM);
+            let path_dst = format!("{path_name}/frame_{count}.{EXT_BM}");
             let mut file_dst = File::create(path_dst).unwrap();
             file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
             count += 1;
         }
         if cli.preview {
-            let preview_path = format!("{}.{}", preview_path_name, EXT_GIF);
-            preview_frames;
+            let mut frames = Vec::<Frame>::new();
+            for image in preview_frames {
+                let dynamic = DynamicImage::from(image);
+                let frame = Frame::new(dynamic.to_rgba8());
+                frames.push(frame);
+            }
+            let preview_path = format!("{preview_path_name}.{EXT_GIF}");
+            let preview_file = File::create(preview_path).unwrap();
+            let mut encoder = GifEncoder::new(preview_file);
+            encoder.set_repeat(Repeat::Infinite).unwrap();
+            encoder.encode_frames(frames.into_iter()).unwrap();
         }
+    } else {
+        panic!("invalid file format")
     }
 }
 
