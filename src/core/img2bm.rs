@@ -1,8 +1,8 @@
 use std::ops::Shl;
 use image::RgbaImage;
 use crate::core::bitmap::Bitmap;
+use crate::core::params::Params;
 use crate::core::threshold::RangeInc;
-use crate::TARGET_WIDTH;
 
 
 const CHANNEL_MAX: f32 = 255.0;
@@ -10,28 +10,25 @@ const BYTE_MAX: u8 = 255;
 
 pub fn img2bm(
     image: &RgbaImage,
-    height: u8,
-    inverse: bool,
-    visible_background: bool,
-    threshold: &RangeInc,
+    params: &Params,
 ) -> Bitmap {
-    let x_offset = (image.width() as i32 - TARGET_WIDTH as i32) / 2;
+    let x_offset = (image.width() as i32 - params.width as i32) / 2;
     let image_width = image.width() as i32;
     let mut chunk = 0u8;
     let mut current_bit = 0u8;
     let mut bytes = Vec::<u8>::new();
     bytes.push(0x00);
     let mut lum_sum: f32 = 0.0;
-    for y in 0..height {
-        for x in 0..TARGET_WIDTH {
+    for y in 0..params.height {
+        for x in 0..params.width {
             let src_x = x as i32 + x_offset;
             let mut make_visible = false;
             if src_x < 0 || src_x >= image_width {
-                make_visible = visible_background;
+                make_visible = params.background_visible;
             } else {
-                make_visible = is_pixel_black(&image, src_x as u32, y as u32, &threshold);
+                make_visible = is_pixel_black(&image, src_x as u32, y as u32, &params.threshold);
             }
-            if inverse {
+            if params.inverse {
                 make_visible = !make_visible;
             }
             if make_visible {
@@ -52,8 +49,8 @@ pub fn img2bm(
     }
 
     Bitmap {
-        width: TARGET_WIDTH,
-        height,
+        width: params.width,
+        height: params.height,
         bytes,
     }
 }

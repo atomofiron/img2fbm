@@ -24,110 +24,105 @@ use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::AnimationDecoder;
 use crate::core::meta::{FrameData, get_manifest, get_meta};
 use crate::core::params::Params;
-use crate::ext::path_ext::PathExt;
+use crate::ext::path_ext::{EXT_GIF, EXT_PICTURE, PathExt};
 
-
-const ARG_THRESHOLD: &str = "threshold";
-const ARG_PREVIEW: &str = "preview";
-const ARG_REMOVE_BACKGROUND: &str = "remove_background_color";
-
-const DOT: char = '.';
-const SLASH: char = '/';
-
-const EXT_PICTURE: [&str; 3] = ["png", "jpg", "jpeg"];
-const EXT_BM: &str = "bm";
-const EXT_PNG: &str = "png";
-const EXT_GIF: &str = "gif";
-
-pub const TARGET_WIDTH: u8 = 128;
 
 fn main() {
     let cli = Cli::parse();
     cli.path.file_name().expect("invalid input file path");
     let params = Params::from(cli);
 
-    if EXT_PICTURE.contains(&input_ext.as_str()) {
-        let image = image::open(path_src).unwrap().to_rgba8();
-        let bitmap = img2bm(&image, cli.height, cli.inverse, make_background_visible, &cli.threshold);
-
-        let path_bm = format!("{path_name}.{EXT_BM}");
-        let mut file_dst = File::create(path_bm).unwrap();
-        file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
-
-        if cli.preview {
-            let preview = bm2preview(&bitmap);
-            let preview_path = format!("{preview_path_name}.{EXT_PNG}");
-            save_preview(&preview, preview_path.as_str());
-        }
-    } else if input_ext.as_str() == EXT_GIF {
-        let mut preview_frames = Vec::<GrayImage>::new();
-        let dir_name = format!("{}_{TARGET_WIDTH}x{}", cli.path.get_name_no_ext(), cli.height);
-        let dir_path = format!("{dolphin_path}{dir_name}/");
-        create_dir_all(dir_path.as_str()).unwrap();
-        let file = File::open(path_src).unwrap();
-        let mut decoder = GifDecoder::new(file).unwrap();
-        let mut hashes = Vec::<u64>::new();
-        let mut data = Vec::<FrameData>::new();
-        let mut min_duration = -1f32;
-        for frame in decoder.into_frames().map(|it| it.unwrap()) {
-            // todo use rayon
-            let image = frame.buffer().to_owned();
-            let bitmap = img2bm(&image, cli.height, cli.inverse, make_background_visible, &cli.threshold);
-
-            let mut hasher = DefaultHasher::new();
-            bitmap.hash(&mut hasher);
-            let hash = hasher.finish();
-            let index = hashes.iter().position(|&it| it == hash).unwrap_or_else(|| {
-                let index = hashes.len();
-                let path_dst = format!("{dir_path}frame_{}.{EXT_BM}", index);
-                let mut file_dst = File::create(path_dst).unwrap();
-                file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
-                hashes.push(hash);
-                if cli.preview {
-                    preview_frames.push(bm2preview(&bitmap));
-                }
-                index
-            });
-            let f_data = FrameData::from(index, &frame.delay());
-            if min_duration < 0.0 || f_data.duration < min_duration {
-                min_duration = f_data.duration;
-            }
-            data.push(f_data);
-        }
-        for f_data in data.iter_mut() {
-            f_data.duration = (f_data.duration / min_duration).round() * min_duration;
-        }
-
-        let meta = get_meta(cli.height, &data);
-        fs::write(format!("{dir_path}meta.txt"), meta).unwrap();
-        let manifest_path = format!("{dolphin_path}manifest.txt");
-        let manifest_path = Path::new(manifest_path.as_str().clone());
-        let with_header = !manifest_path.exists();
-        let manifest_part = get_manifest(with_header, dir_name);
-        let mut manifest_file = OpenOptions::new()
-            .write(true).append(true).create(true)
-            .open(manifest_path)
-            .unwrap();
-        manifest_file.write(manifest_part.as_bytes()).unwrap();
-
-        if cli.preview {
-            let mut frames = Vec::<Frame>::new();
-            for fd in data {
-                let image = preview_frames.get(fd.index).unwrap();
-                let dynamic = DynamicImage::from(image.clone());
-                let delay = Delay::from_numer_denom_ms(fd.duration as u32, 1);
-                let frame = Frame::from_parts(dynamic.to_rgba8(), 0, 0, delay);
-                frames.push(frame);
-            }
-            let preview_path = format!("{preview_path_name}.{EXT_GIF}");
-            let preview_file = File::create(preview_path).unwrap();
-            let mut encoder = GifEncoder::new(preview_file);
-            encoder.set_repeat(Repeat::Infinite).unwrap();
-            encoder.encode_frames(frames.into_iter()).unwrap();
-        }
+    if EXT_PICTURE.contains(&params.input_ext.as_str()) {
+        from_picture(&params)
+    } else if params.input_ext == EXT_GIF {
+        from_gif(&params)
     } else {
-        panic!("invalid file format")
+        panic!("invalid input file format")
     }
+}
+
+fn from_picture(params: &Params) {
+    let image = image::open(params.path_src.clone()).unwrap().to_rgba8();
+    let bitmap = img2bm(&image, &params);
+
+    let mut file_dst = File::create(params.picture_path_bm.clone()).unwrap();
+    file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
+
+    if params.preview {
+        let preview = bm2preview(&bitmap);
+        save_preview(&preview, params.preview_picture_path.as_str());
+    }
+}
+
+fn from_gif(params: &Params) {
+    let mut preview_frames = Vec::<GrayImage>::new();
+    create_dir_all(params.dolphin_anim_path.as_str()).unwrap();
+    let file = File::open(params.path_src.clone()).unwrap();
+    let mut decoder = GifDecoder::new(file).unwrap();
+    let mut hashes = Vec::<u64>::new();
+    let mut data = Vec::<FrameData>::new();
+    let mut min_duration = -1f32;
+    for frame in decoder.into_frames().map(|it| it.unwrap()) {
+        // todo use rayon
+        let image = frame.buffer().to_owned();
+        let bitmap = img2bm(&image, &params);
+
+        let mut hasher = DefaultHasher::new();
+        bitmap.hash(&mut hasher);
+        let hash = hasher.finish();
+        let index = hashes.iter().position(|&it| it == hash).unwrap_or_else(|| {
+            let index = hashes.len();
+            let mut file_dst = File::create(params.path_bm(index)).unwrap();
+            file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
+            hashes.push(hash);
+            if params.preview {
+                preview_frames.push(bm2preview(&bitmap));
+            }
+            index
+        });
+        let f_data = FrameData::from(index, &frame.delay());
+        if min_duration < 0.0 || f_data.duration < min_duration {
+            min_duration = f_data.duration;
+        }
+        data.push(f_data);
+    }
+    for f_data in data.iter_mut() {
+        f_data.duration = (f_data.duration / min_duration).round() * min_duration;
+    }
+    write_meta(&params, &data);
+
+    if params.preview {
+        bm2preview_gif(&params, &data, &preview_frames)
+    }
+}
+
+fn write_meta(params: &Params, data: &Vec<FrameData>) {
+    let meta = get_meta(params.height, data);
+    fs::write(params.meta_path.clone(), meta).unwrap();
+    let manifest_path = Path::new(params.manifest_path.as_str().clone());
+    let with_header = !manifest_path.exists();
+    let manifest_part = get_manifest(with_header, params.dolphin_anim_name.clone());
+    let mut manifest_file = OpenOptions::new()
+        .write(true).append(true).create(true)
+        .open(manifest_path)
+        .unwrap();
+    manifest_file.write(manifest_part.as_bytes()).unwrap();
+
+}
+
+fn bm2preview_gif(params: &Params, data: &Vec::<FrameData>, preview_frames: &Vec::<GrayImage>) {
+    let mut frames = Vec::<Frame>::new();
+    for fd in data {
+        let image = preview_frames.get(fd.index).unwrap();
+        let dynamic = DynamicImage::from(image.clone());
+        let delay = Delay::from_numer_denom_ms(fd.duration as u32, 1);
+        let frame = Frame::from_parts(dynamic.to_rgba8(), 0, 0, delay);
+        frames.push(frame);
+    }
+    let preview_file = File::create(params.preview_gif_path.clone()).unwrap();
+    let mut encoder = GifEncoder::new(preview_file);
+    encoder.set_repeat(Repeat::Infinite).unwrap();
+    encoder.encode_frames(frames.into_iter()).unwrap();
 }
 
 fn bm2preview(bitmap: &Bitmap) -> GrayImage {

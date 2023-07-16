@@ -1,6 +1,11 @@
 use std::path::PathBuf;
 
 
+pub const EXT_PICTURE: [&str; 3] = ["png", "jpg", "jpeg"];
+pub const EXT_BM: &str = "bm";
+pub const EXT_PNG: &str = "png";
+pub const EXT_GIF: &str = "gif";
+
 pub trait PathExt {
     fn to_string(&self) -> String;
     fn get_path_name(&self) -> String;
