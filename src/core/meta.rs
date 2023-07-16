@@ -1,7 +1,7 @@
 use std::collections::LinkedList;
 use clap::builder::Str;
 use image::Delay;
-use crate::core::ext::iter_ext::Sum;
+use crate::ext::iter_ext::Sum;
 
 pub struct FrameData {
     pub index: usize,

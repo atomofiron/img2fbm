@@ -1,4 +1,5 @@
 mod core;
+mod ext;
 
 use std::fs::{create_dir, create_dir_all, File};
 use std::{env, fs, io};
@@ -21,7 +22,7 @@ use crate::core::img2bm::img2bm;
 use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::AnimationDecoder;
 use crate::core::meta::{FrameData, get_meta};
-use crate::core::path_ext::PathExt;
+use crate::ext::path_ext::PathExt;
 
 
 const ARG_THRESHOLD: &str = "threshold";
