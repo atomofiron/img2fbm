@@ -1,30 +1,26 @@
 mod core;
 
-use std::fs::{create_dir, create_dir_all, File, OpenOptions};
+use std::fs::{create_dir, create_dir_all, File};
 use std::{env, fs, io};
-use std::ffi::OsStr;
+use std::collections::hash_map::DefaultHasher;
 use std::fmt::{Debug, Display, format, Formatter};
-use std::io::Write;
+use std::hash::{Hash, Hasher};
+use std::io::{Read, Write};
 use std::num::{IntErrorKind, ParseIntError};
-use std::ops::{Rem, Shl, Shr};
-use std::path::PathBuf;
+use std::ops::Shr;
 use clap::{Parser, Arg, ArgAction, ArgMatches, Command, CommandFactory};
 use clap::error::ErrorKind;
-use image::{ColorType, DynamicImage, Frame, GenericImage, GenericImageView, GrayImage, ImageFormat, Luma, Rgba, RgbImage};
-use image::codecs::pnm::ArbitraryTuplType;
+use image::{ColorType, Delay, DynamicImage, Frame, GenericImage, GenericImageView, GrayImage, ImageFormat, Luma, Rgba};
 use image::codecs::pnm::ArbitraryTuplType::Grayscale;
-use image::ColorType::{Rgb8, Rgba8};
-use image::DynamicImage::ImageRgba8;
-use image::imageops::FilterType;
 use crate::core::background::Background;
 use crate::core::bitmap::Bitmap;
 use crate::core::color::Color;
 use crate::core::config::Cli;
 use crate::core::img2bm::img2bm;
-use crate::core::string_util::StringUtil;
 
 use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
-use image::{ImageDecoder, AnimationDecoder};
+use image::AnimationDecoder;
+use crate::core::meta::{FrameData, get_meta};
 use crate::core::path_ext::PathExt;
 
 
@@ -73,29 +69,49 @@ fn main() {
         }
     } else if input_ext.as_str() == EXT_GIF {
         let mut preview_frames = Vec::<GrayImage>::new();
+        create_dir_all(path_name.as_str()).unwrap();
         let file = File::open(path_src).unwrap();
         let mut decoder = GifDecoder::new(file).unwrap();
-        let mut count = 0u32;
-        for frame in decoder.into_frames() {
+        let mut hashes = Vec::<u64>::new();
+        let mut data = Vec::<FrameData>::new();
+        let mut min_duration = -1f32;
+        for frame in decoder.into_frames().map(|it| it.unwrap()) {
             // todo use rayon
-            let image = frame.unwrap().buffer().to_owned();
+            let image = frame.buffer().to_owned();
             let bitmap = img2bm(&image, cli.height, cli.inverse, make_background_visible, &cli.threshold);
 
-            if cli.preview {
-                preview_frames.push(bm2preview(&bitmap));
+            let mut hasher = DefaultHasher::new();
+            bitmap.hash(&mut hasher);
+            let hash = hasher.finish();
+            let index = hashes.iter().position(|&it| it == hash).unwrap_or_else(|| {
+                let index = hashes.len();
+                let path_dst = format!("{path_name}/frame_{}.{EXT_BM}", index);
+                let mut file_dst = File::create(path_dst).unwrap();
+                file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
+                hashes.push(hash);
+                if cli.preview {
+                    preview_frames.push(bm2preview(&bitmap));
+                }
+                index
+            });
+            let f_data = FrameData::from(index, &frame.delay());
+            if min_duration < 0.0 || f_data.duration < min_duration {
+                min_duration = f_data.duration;
             }
-
-            create_dir_all(path_name.as_str()).unwrap();
-            let path_dst = format!("{path_name}/frame_{count}.{EXT_BM}");
-            let mut file_dst = File::create(path_dst).unwrap();
-            file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
-            count += 1;
+            data.push(f_data);
         }
+        for f_data in data.iter_mut() {
+            f_data.duration = (f_data.duration / min_duration).round() * min_duration;
+        }
+        let meta = get_meta(cli.height, &data);
+        fs::write(format!("{path_name}/meta.txt"), meta).unwrap();
         if cli.preview {
             let mut frames = Vec::<Frame>::new();
-            for image in preview_frames {
-                let dynamic = DynamicImage::from(image);
-                let frame = Frame::new(dynamic.to_rgba8());
+            for fd in data {
+                let image = preview_frames.get(fd.index).unwrap();
+                let dynamic = DynamicImage::from(image.clone());
+                let delay = Delay::from_numer_denom_ms(fd.duration as u32, 1);
+                let frame = Frame::from_parts(dynamic.to_rgba8(), 0, 0, delay);
                 frames.push(frame);
             }
             let preview_path = format!("{preview_path_name}.{EXT_GIF}");

@@ -1,4 +1,5 @@
 
+#[derive(Hash)]
 pub struct Bitmap {
     pub width: u8,
     pub height: u8,
