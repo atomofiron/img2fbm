@@ -43,7 +43,6 @@ impl Params {
         let dolphin_anim_path = format!("{dolphin_path}{dolphin_anim_name}/");
         let meta_path = format!("{dolphin_anim_path}meta.txt");
         let manifest_path = format!("{dolphin_path}manifest.txt");
-        println!("src {}, path_name {path_name}\ninput_ext {input_ext}\npreview_path_name {preview_path_name}\npreview_picture_path {preview_picture_path}\npreview_gif_path {preview_gif_path}\npicture_path_bm {picture_path_bm}\ndolphin_path {dolphin_path}\ndolphin_anim_name {dolphin_anim_name}\ndolphin_anim_path {dolphin_anim_path}\nmeta_path {meta_path}\nmanifest_path {manifest_path}", cli.path.to_string());
         Params {
             width: TARGET_WIDTH,
             height: cli.height,
