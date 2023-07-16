@@ -2,6 +2,7 @@ use std::fmt::Display;
 use std::ops::Deref;
 use crate::core::args::Cli;
 use crate::core::background::Background;
+use crate::core::scale_type::ScaleType;
 use crate::core::threshold::RangeInc;
 use crate::ext::path_ext::{EXT_PNG, EXT_GIF, EXT_BM, EXT_PICTURE, PathExt};
 
@@ -15,6 +16,7 @@ pub struct Params {
     pub inverse: bool,
     pub background_visible: bool,
     pub threshold: RangeInc,
+    pub scale_type: ScaleType,
 
     pub path_src: String,
     pub path_name: String,
@@ -54,6 +56,7 @@ impl Params {
                 Some(Background::Invisible) => false,
             },
             threshold: cli.threshold.clone(),
+            scale_type: cli.scale_type.unwrap_or(ScaleType::FitBottom),
             path_src: cli.path.to_string(),
             path_name,
             input_ext,

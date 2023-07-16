@@ -6,3 +6,4 @@ pub mod img2bm;
 pub mod color;
 pub mod meta;
 pub mod params;
+pub mod scale_type;

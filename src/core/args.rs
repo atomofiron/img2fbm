@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::{CommandFactory, Parser};
 use regex::Regex;
 use crate::core::background::Background;
+use crate::core::scale_type::ScaleType;
 use crate::core::threshold::{RangeInc, THRESHOLD_RANGE_OP};
 
 #[derive(Debug, Parser)]
@@ -13,7 +14,7 @@ use crate::core::threshold::{RangeInc, THRESHOLD_RANGE_OP};
 #[command(about = "Flipper bitmap files generator", long_about = None)]
 #[command(arg_required_else_help = true)]
 pub struct Cli {
-    /// Path to png|jpg|gif file
+    /// Path to png|jpg|jpeg|gif file
     pub path: PathBuf,
 
     /// Target path to the 'dolphin' directory, if the gif passed
@@ -30,6 +31,13 @@ pub struct Cli {
     )]
     pub height: u8,
 
+    /// Scale type [default: fit-bottom]
+    #[arg(short, long, value_name = "type")]
+    pub scale_type: Option<ScaleType>,
+    // thread 'main' has overflowed its stack
+    // fatal runtime error: stack overflow
+    // caused by default_value_t = ScaleType::FitBottom
+
     /// Generate the previews of result pictures
     #[arg(short, long)]
     pub preview: bool,
@@ -38,8 +46,8 @@ pub struct Cli {
     #[arg(short, long)]
     pub inverse: bool,
 
-    /// Set background pixels visible
-    #[arg(short, long)]
+    /// Set background pixels visible [default: invisible]
+    #[arg(short, long, value_name = "background")]
     pub background: Option<Background>,
     // thread 'main' has overflowed its stack
     // fatal runtime error: stack overflow

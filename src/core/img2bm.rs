@@ -1,7 +1,10 @@
+use std::fs::FileType;
 use std::ops::Shl;
-use image::RgbaImage;
+use image::{DynamicImage, RgbaImage};
+use image::imageops::FilterType;
 use crate::core::bitmap::Bitmap;
 use crate::core::params::Params;
+use crate::core::scale_type::ScaleType;
 use crate::core::threshold::RangeInc;
 
 
@@ -12,21 +15,27 @@ pub fn img2bm(
     image: &RgbaImage,
     params: &Params,
 ) -> Bitmap {
-    let x_offset = (image.width() as i32 - params.width as i32) / 2;
-    let image_width = image.width() as i32;
+    let resized = scale_to(image, params);
+    let resized_width = resized.width() as i32;
+    let resized_height = resized.height() as i32;
+    let x_offset = (resized_width - params.width as i32) / 2;
+    let output_height = match params.scale_type {
+        ScaleType::FillCenter | ScaleType::FitBottom => resized_height,
+        ScaleType::FitCenter => resized_height + (params.height as i32 - resized_height) / 2,
+    };
     let mut chunk = 0u8;
     let mut current_bit = 0u8;
     let mut bytes = Vec::<u8>::new();
     bytes.push(0x00);
     let mut lum_sum: f32 = 0.0;
-    for y in 0..params.height {
+    for y in 0..output_height {
         for x in 0..params.width {
             let src_x = x as i32 + x_offset;
             let mut make_visible = false;
-            if src_x < 0 || src_x >= image_width {
+            if src_x < 0 || src_x >= resized_width || y >= resized_height {
                 make_visible = params.background_visible;
             } else {
-                make_visible = is_pixel_black(&image, src_x as u32, y as u32, &params.threshold);
+                make_visible = is_pixel_black(&resized, src_x as u32, y as u32, &params.threshold);
             }
             if params.inverse {
                 make_visible = !make_visible;
@@ -50,7 +59,7 @@ pub fn img2bm(
 
     Bitmap {
         width: params.width,
-        height: params.height,
+        height: output_height as u8,
         bytes,
     }
 }
@@ -73,6 +82,15 @@ fn is_pixel_black(image: &RgbaImage, x: u32, y: u32, threshold: &RangeInc) -> bo
     let rnd = rand::random::<f32>();
     let threshold = threshold.start() + threshold.size() * rnd;
     return threshold > luminance;
+}
+
+fn scale_to(image: &RgbaImage, params: &Params) -> RgbaImage {
+    let dynamic = DynamicImage::from(image.clone());
+    let resized = match params.scale_type {
+        ScaleType::FillCenter => dynamic.resize_to_fill(params.width as u32, params.height as u32, FilterType::Nearest),
+        ScaleType::FitCenter | ScaleType::FitBottom => dynamic.resize(params.width as u32, params.height as u32, FilterType::Nearest),
+    };
+    return resized.to_rgba8();
 }
 
 // unused:
