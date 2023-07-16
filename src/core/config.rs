@@ -16,6 +16,9 @@ pub struct Cli {
     /// Path to png|jpg|gif file
     pub path: PathBuf,
 
+    /// Target path to the 'dolphin' directory, if the gif passed
+    pub target: Option<PathBuf>,
+
     /// Sets the height of output frame(s)
     #[arg(
         required = false,

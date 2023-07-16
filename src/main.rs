@@ -1,7 +1,7 @@
 mod core;
 mod ext;
 
-use std::fs::{create_dir, create_dir_all, File};
+use std::fs::{create_dir_all, File, OpenOptions};
 use std::{env, fs, io};
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::{Debug, Display, format, Formatter};
@@ -9,6 +9,7 @@ use std::hash::{Hash, Hasher};
 use std::io::{Read, Write};
 use std::num::{IntErrorKind, ParseIntError};
 use std::ops::Shr;
+use std::path::Path;
 use clap::{Parser, Arg, ArgAction, ArgMatches, Command, CommandFactory};
 use clap::error::ErrorKind;
 use image::{ColorType, Delay, DynamicImage, Frame, GenericImage, GenericImageView, GrayImage, ImageFormat, Luma, Rgba};
@@ -21,7 +22,7 @@ use crate::core::img2bm::img2bm;
 
 use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::AnimationDecoder;
-use crate::core::meta::{FrameData, get_meta};
+use crate::core::meta::{FrameData, get_manifest, get_meta};
 use crate::ext::path_ext::PathExt;
 
 
@@ -50,6 +51,9 @@ fn main() {
         Some(Background::Invisible) => false,
     };
 
+    let dolphin_path = cli.target
+        .map(|it| it.as_dir())
+        .unwrap_or_else(|| cli.path.get_parent());
     let path_src = cli.path.to_string();
     let path_name = cli.path.get_path_name();
     let input_ext = cli.path.get_ext().to_lowercase();
@@ -70,7 +74,9 @@ fn main() {
         }
     } else if input_ext.as_str() == EXT_GIF {
         let mut preview_frames = Vec::<GrayImage>::new();
-        create_dir_all(path_name.as_str()).unwrap();
+        let dir_name = format!("{}_{TARGET_WIDTH}x{}", cli.path.get_name_no_ext(), cli.height);
+        let dir_path = format!("{dolphin_path}{dir_name}/");
+        create_dir_all(dir_path.as_str()).unwrap();
         let file = File::open(path_src).unwrap();
         let mut decoder = GifDecoder::new(file).unwrap();
         let mut hashes = Vec::<u64>::new();
@@ -86,7 +92,7 @@ fn main() {
             let hash = hasher.finish();
             let index = hashes.iter().position(|&it| it == hash).unwrap_or_else(|| {
                 let index = hashes.len();
-                let path_dst = format!("{path_name}/frame_{}.{EXT_BM}", index);
+                let path_dst = format!("{dir_path}frame_{}.{EXT_BM}", index);
                 let mut file_dst = File::create(path_dst).unwrap();
                 file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
                 hashes.push(hash);
@@ -104,8 +110,19 @@ fn main() {
         for f_data in data.iter_mut() {
             f_data.duration = (f_data.duration / min_duration).round() * min_duration;
         }
+
         let meta = get_meta(cli.height, &data);
-        fs::write(format!("{path_name}/meta.txt"), meta).unwrap();
+        fs::write(format!("{dir_path}meta.txt"), meta).unwrap();
+        let manifest_path = format!("{dolphin_path}manifest.txt");
+        let manifest_path = Path::new(manifest_path.as_str().clone());
+        let with_header = !manifest_path.exists();
+        let manifest_part = get_manifest(with_header, dir_name);
+        let mut manifest_file = OpenOptions::new()
+            .write(true).append(true).create(true)
+            .open(manifest_path)
+            .unwrap();
+        manifest_file.write(manifest_part.as_bytes()).unwrap();
+
         if cli.preview {
             let mut frames = Vec::<Frame>::new();
             for fd in data {

@@ -52,3 +52,16 @@ Active cooldown: 0
 Bubble slots: 0
 ")
 }
+
+pub fn get_manifest(with_header: bool, name: String) -> String {
+    let header = if with_header { "Filetype: Flipper Animation Manifest\nVersion: 1" } else { "" };
+    return format!("{header}
+
+Name: {name}
+Min butthurt: 0
+Max butthurt: 13
+Min level: 1
+Max level: 3
+Weight: 8
+")
+}
