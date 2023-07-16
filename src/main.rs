@@ -17,7 +17,7 @@ use image::codecs::pnm::ArbitraryTuplType::Grayscale;
 use crate::core::background::Background;
 use crate::core::bitmap::Bitmap;
 use crate::core::color::Color;
-use crate::core::config::Cli;
+use crate::core::args::Cli;
 use crate::core::img2bm::img2bm;
 
 use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
