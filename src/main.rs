@@ -23,6 +23,7 @@ use crate::core::img2bm::img2bm;
 use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::AnimationDecoder;
 use crate::core::meta::{FrameData, get_manifest, get_meta};
+use crate::core::params::Params;
 use crate::ext::path_ext::PathExt;
 
 
@@ -42,22 +43,8 @@ pub const TARGET_WIDTH: u8 = 128;
 
 fn main() {
     let cli = Cli::parse();
-
     cli.path.file_name().expect("invalid input file path");
-
-    let make_background_visible = match cli.background {
-        None => false,
-        Some(Background::Visible) => true,
-        Some(Background::Invisible) => false,
-    };
-
-    let dolphin_path = cli.target
-        .map(|it| it.as_dir())
-        .unwrap_or_else(|| cli.path.get_parent());
-    let path_src = cli.path.to_string();
-    let path_name = cli.path.get_path_name();
-    let input_ext = cli.path.get_ext().to_lowercase();
-    let preview_path_name = format!("{}_preview", cli.path.get_path_name());
+    let params = Params::from(cli);
 
     if EXT_PICTURE.contains(&input_ext.as_str()) {
         let image = image::open(path_src).unwrap().to_rgba8();
