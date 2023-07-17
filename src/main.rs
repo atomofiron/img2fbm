@@ -89,16 +89,17 @@ fn from_gif(params: &Params) {
     for f_data in data.iter_mut() {
         f_data.duration = (f_data.duration / min_duration).round() * min_duration;
     }
-    write_meta(&params, &data);
-
+    let meta = get_meta(params.height, &data);
+    fs::write(params.meta_path.clone(), meta).unwrap();
+    if params.with_manifest {
+        write_manifest(&params);
+    }
     if params.preview {
         bm2preview_gif(&params, &data, &preview_frames)
     }
 }
 
-fn write_meta(params: &Params, data: &Vec<FrameData>) {
-    let meta = get_meta(params.height, data);
-    fs::write(params.meta_path.clone(), meta).unwrap();
+fn write_manifest(params: &Params) {
     let manifest_path = Path::new(params.manifest_path.as_str().clone());
     let with_header = !manifest_path.exists();
     let manifest_part = get_manifest(with_header, params.dolphin_anim_name.clone());

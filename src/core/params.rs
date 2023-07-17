@@ -17,6 +17,7 @@ pub struct Params {
     pub background_visible: bool,
     pub threshold: RangeInc,
     pub scale_type: ScaleType,
+    pub with_manifest: bool,
 
     pub path_src: String,
     pub path_name: String,
@@ -34,6 +35,9 @@ pub struct Params {
 
 impl Params {
     pub fn from(cli: Cli) -> Params {
+        if let None = cli.path.extension() {
+            panic!("invalid input file")
+        }
         let path_name = cli.path.get_path_name();
         let input_ext = cli.path.get_ext().to_lowercase();
         let preview_path_name = format!("{}_preview", cli.path.get_path_name());
@@ -57,6 +61,8 @@ impl Params {
             },
             threshold: cli.threshold.unwrap_or(RangeInc(0.2..=0.8)),
             scale_type: cli.scale_type.unwrap_or(ScaleType::FitBottom),
+            with_manifest: cli.target.is_some(),
+
             path_src: cli.path.to_string(),
             path_name,
             input_ext,
