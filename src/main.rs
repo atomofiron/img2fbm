@@ -32,7 +32,7 @@ fn main() {
     cli.path.file_name().expect("invalid input file path");
     let params = Params::from(cli);
 
-    if EXT_PICTURE.contains(&params.input_ext.as_str()) {
+    if EXT_PICTURE.contains(&&*params.input_ext) {
         from_picture(&params)
     } else if params.input_ext == EXT_GIF {
         from_gif(&params)
