@@ -35,7 +35,7 @@ pub fn img2bm(
             if src_x < 0 || src_x >= resized_width || y >= resized_height {
                 make_visible = params.background_visible;
             } else {
-                make_visible = is_pixel_black(&resized, src_x as u32, y as u32, &params.threshold);
+                make_visible = is_pixel_dark(&resized, src_x as u32, y as u32, &params.threshold);
             }
             if params.inverse {
                 make_visible = !make_visible;
@@ -64,7 +64,7 @@ pub fn img2bm(
     }
 }
 
-fn is_pixel_black(image: &RgbaImage, x: u32, y: u32, threshold: &RangeInc) -> bool {
+fn is_pixel_dark(image: &RgbaImage, x: u32, y: u32, threshold: &RangeInc) -> bool {
     let pixel = image.get_pixel(x, y).0;
     let r = pixel[0] as f32 / CHANNEL_MAX;
     let g = pixel[1] as f32 / CHANNEL_MAX;
@@ -79,9 +79,18 @@ fn is_pixel_black(image: &RgbaImage, x: u32, y: u32, threshold: &RangeInc) -> bo
             return true
         }
     }
-    let rnd = rand::random::<f32>();
-    let threshold = threshold.start() + threshold.size() * rnd;
-    return threshold > luminance;
+    let luminance = (luminance - threshold.start()) / threshold.size();
+    return is_dark(luminance, x, y);
+}
+
+fn is_dark(luminance: f32, x: u32, y: u32) -> bool {
+    return match luminance {
+        l if l > 0.8 => (x % 2 == 0) == (y % 2 == 0),
+        l if l > 0.6 => ((x + ((y / 2) % 2)) % 2 == 0) && (y % 2 == 0),
+        l if l > 0.4 => (x % 3 == 0) && (y % 3 == 0),
+        l if l > 0.2 => ((x + (y / 2) % 2 * 2) % 4 == 0) && ((y) % 2 == 0),
+        _ => (x % 4 == 0) == (y % 4 == 0),
+    };
 }
 
 fn scale_to(image: &RgbaImage, params: &Params) -> RgbaImage {
