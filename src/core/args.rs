@@ -4,7 +4,7 @@ use clap::{CommandFactory, Parser};
 use regex::Regex;
 use crate::core::background::Background;
 use crate::core::scale_type::ScaleType;
-use crate::core::threshold::{RangeInc, THRESHOLD_RANGE_OP};
+use crate::core::threshold::RangeInc;
 
 #[derive(Debug, Parser)]
 
@@ -53,15 +53,9 @@ pub struct Cli {
     // fatal runtime error: stack overflow
     // caused by default_value_t = Background::Invisible
 
-    /// Threshold value or range of pixel brightness as a percentage, like 20:80, 40:, :60, 50:50 or 50
-    #[arg(
-        short,
-        long,
-        value_name = "percentage[:percentage]",
-        default_value_t = RangeInc(0.2..=0.8),
-        value_parser = str_to_threshold,
-    )]
-    pub threshold: RangeInc,
+    /// Threshold value or range of pixel brightness as a percentage, such as 20:80, 40:, :60, 50:50 or 50 [default: 20:80]
+    #[arg(short, long, value_name = "percentage[:percentage]", value_parser = str_to_threshold)]
+    pub threshold: Option<RangeInc>,
 }
 
 fn str_to_threshold(value: &str) -> Result<RangeInc, String> {

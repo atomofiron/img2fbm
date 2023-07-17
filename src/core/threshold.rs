@@ -2,8 +2,6 @@ use std::fmt::{Debug, Display, Formatter};
 use std::ops::RangeInclusive;
 
 
-pub const THRESHOLD_RANGE_OP: &str = "..=";
-
 pub struct RangeInc(pub RangeInclusive<f32>);
 
 impl RangeInc {
@@ -27,7 +25,7 @@ impl RangeInc {
 
 impl Display for RangeInc {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}{}{}", self.start(), THRESHOLD_RANGE_OP, self.end())
+        write!(f, "{}:{}", self.start(), self.end())
     }
 }
 

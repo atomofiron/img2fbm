@@ -55,7 +55,7 @@ impl Params {
                 Some(Background::Visible) => true,
                 Some(Background::Invisible) => false,
             },
-            threshold: cli.threshold.clone(),
+            threshold: cli.threshold.unwrap_or(RangeInc(0.2..=0.8)),
             scale_type: cli.scale_type.unwrap_or(ScaleType::FitBottom),
             path_src: cli.path.to_string(),
             path_name,
