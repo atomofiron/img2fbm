@@ -46,6 +46,10 @@ pub struct Cli {
     #[arg(short, long)]
     pub inverse: bool,
 
+    /// Replace dolphin/manifest.txt file with a new one.
+    #[arg(short, long)]
+    pub replace_manifest: bool,
+
     /// Set background pixels visible [default: invisible]
     #[arg(short, long, value_name = "background")]
     pub background: Option<Background>,

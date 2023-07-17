@@ -101,10 +101,10 @@ fn from_gif(params: &Params) {
 
 fn write_manifest(params: &Params) {
     let manifest_path = Path::new(params.manifest_path.as_str().clone());
-    let with_header = !manifest_path.exists();
+    let with_header = params.replace_manifest || !manifest_path.exists();
     let manifest_part = get_manifest(with_header, params.dolphin_anim_name.clone());
     let mut manifest_file = OpenOptions::new()
-        .write(true).append(true).create(true)
+        .create(true).write(true).append(!params.replace_manifest)
         .open(manifest_path)
         .unwrap();
     manifest_file.write(manifest_part.as_bytes()).unwrap();
