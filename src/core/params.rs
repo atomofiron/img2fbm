@@ -13,6 +13,7 @@ pub struct Params {
     pub width: u8,
     pub height: u8,
     pub preview: bool,
+    pub only_preview: bool,
     pub inverse: bool,
     pub background_visible: bool,
     pub threshold: RangeInc,
@@ -53,7 +54,8 @@ impl Params {
         Params {
             width: TARGET_WIDTH,
             height: cli.height,
-            preview: cli.preview,
+            preview: cli.preview || cli.op,
+            only_preview: cli.op,
             inverse: cli.inverse,
             background_visible: match cli.background {
                 None => false,

@@ -42,6 +42,10 @@ pub struct Cli {
     #[arg(short, long)]
     pub preview: bool,
 
+    /// Only preview, do not generate .bm and other Flipper Animation files
+    #[arg(long)]
+    pub op: bool,
+
     /// Inverse output pixels
     #[arg(short, long)]
     pub inverse: bool,

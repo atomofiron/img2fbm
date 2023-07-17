@@ -45,9 +45,10 @@ fn from_picture(params: &Params) {
     let image = image::open(params.path_src.clone()).unwrap().to_rgba8();
     let bitmap = img2bm(&image, &params);
 
-    let mut file_dst = File::create(params.picture_path_bm.clone()).unwrap();
-    file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
-
+    if !params.only_preview {
+        let mut file_dst = File::create(params.picture_path_bm.clone()).unwrap();
+        file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
+    }
     if params.preview {
         let preview = bm2preview(&bitmap);
         save_preview(&preview, params.preview_picture_path.as_str());
@@ -72,8 +73,10 @@ fn from_gif(params: &Params) {
         let hash = hasher.finish();
         let index = hashes.iter().position(|&it| it == hash).unwrap_or_else(|| {
             let index = hashes.len();
-            let mut file_dst = File::create(params.path_bm(index)).unwrap();
-            file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
+            if !params.only_preview {
+                let mut file_dst = File::create(params.path_bm(index)).unwrap();
+                file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
+            }
             hashes.push(hash);
             if params.preview {
                 preview_frames.push(bm2preview(&bitmap));
@@ -89,10 +92,12 @@ fn from_gif(params: &Params) {
     for f_data in data.iter_mut() {
         f_data.duration = (f_data.duration / min_duration).round() * min_duration;
     }
-    let meta = get_meta(params.height, &data);
-    fs::write(params.meta_path.clone(), meta).unwrap();
-    if params.with_manifest {
-        write_manifest(&params);
+    if !params.only_preview {
+        let meta = get_meta(params.height, &data);
+        fs::write(params.meta_path.clone(), meta).unwrap();
+        if params.with_manifest {
+            write_manifest(&params);
+        }
     }
     if params.preview {
         bm2preview_gif(&params, &data, &preview_frames)
