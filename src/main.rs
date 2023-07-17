@@ -127,9 +127,10 @@ fn bm2preview_gif(params: &Params, data: &Vec::<FrameData>, preview_frames: &Vec
 }
 
 fn bm2preview(bitmap: &Bitmap) -> GrayImage {
+    let scale = 3;
     let width = bitmap.width as u32;
     let height = bitmap.height as u32;
-    let mut image = GrayImage::new(width, height);
+    let mut image = GrayImage::new(width * scale, height * scale);
     for y in 0..height {
         for x in 0..width {
             let index = width * y + x;
@@ -137,7 +138,11 @@ fn bm2preview(bitmap: &Bitmap) -> GrayImage {
             let byte = bitmap.bytes.get(index as usize / 8 + 1).unwrap();
             let bit = byte.shr(index % 8) % 2 == 1;
             if !bit {
-                image.put_pixel(x, y, Luma([255u8]));
+                for x in (x * scale)..(x * scale + scale) {
+                    for y in (y * scale)..(y * scale + scale) {
+                        image.put_pixel(x, y, Luma([255u8]));
+                    }
+                }
             }
         }
     }
