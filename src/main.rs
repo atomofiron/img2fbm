@@ -50,7 +50,7 @@ fn from_picture(params: &Params) {
         file_dst.write_all(bitmap.bytes.as_slice()).unwrap();
     }
     if params.preview {
-        let preview = bm2preview(&bitmap);
+        let preview = bm2preview(&bitmap, params.preview_scale);
         save_preview(&preview, params.preview_picture_path.as_str());
     }
 }
@@ -79,7 +79,7 @@ fn from_gif(params: &Params) {
             }
             hashes.push(hash);
             if params.preview {
-                preview_frames.push(bm2preview(&bitmap));
+                preview_frames.push(bm2preview(&bitmap, params.preview_scale));
             }
             index
         });
@@ -131,8 +131,7 @@ fn bm2preview_gif(params: &Params, data: &Vec::<FrameData>, preview_frames: &Vec
     encoder.encode_frames(frames.into_iter()).unwrap();
 }
 
-fn bm2preview(bitmap: &Bitmap) -> GrayImage {
-    let scale = 3;
+fn bm2preview(bitmap: &Bitmap, scale: u32) -> GrayImage {
     let width = bitmap.width as u32;
     let height = bitmap.height as u32;
     let mut image = GrayImage::new(width * scale, height * scale);

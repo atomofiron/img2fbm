@@ -46,6 +46,10 @@ pub struct Cli {
     #[arg(long)]
     pub op: bool,
 
+    /// Preview scale ratio
+    #[arg(long, default_value_t = 3)]
+    pub ps: u8,
+
     /// Inverse output pixels
     #[arg(short, long)]
     pub inverse: bool,
