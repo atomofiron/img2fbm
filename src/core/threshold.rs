@@ -15,11 +15,11 @@ impl RangeInc {
     }
 
     pub fn is_max(&self) -> bool {
-        *self.0.start() == 0.0 && *self.0.end() == 1.0
+        self.start() == 0.0 && self.end() == 1.0
     }
 
     pub fn size(&self) -> f32 {
-        return *self.0.end() - *self.0.start()
+        self.end() - self.start()
     }
 }
 

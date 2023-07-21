@@ -75,7 +75,7 @@ fn str_to_threshold(value: &str) -> Result<RangeInc, String> {
         return Err(cause());
     }
     let first = *parts.first().unwrap();
-    let first = if value.is_empty() { 0.0 } else {
+    let first = if first.is_empty() { 0.0 } else {
         parse(first).map_err(|_| cause())?
     };
     if parts.len() == 1 {

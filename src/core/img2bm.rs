@@ -1,145 +1,122 @@
 use std::fs::FileType;
-use std::ops::Shl;
-use image::{DynamicImage, RgbaImage};
+use std::ops::Range;
+use image::{DynamicImage, GrayImage, RgbaImage};
 use image::imageops::FilterType;
 use crate::core::bitmap::Bitmap;
 use crate::core::params::Params;
 use crate::core::scale_type::ScaleType;
 use crate::core::threshold::RangeInc;
+use crate::ext::range_ext::for_each;
 
 
 const CHANNEL_MAX: f32 = 255.0;
 const BYTE_MAX: u8 = 255;
+const MAX_RADIUS: f32 = 4.0;
 
-pub fn img2bm(
-    image: &RgbaImage,
-    params: &Params,
-) -> Bitmap {
+pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
     let resized = scale_to(image, params);
-    let resized_width = resized.width() as i32;
     let resized_height = resized.height() as i32;
-    let x_offset = (resized_width - params.width as i32) / 2;
     let output_height = match params.scale_type {
         ScaleType::FillCenter | ScaleType::FitBottom => resized_height,
         ScaleType::FitCenter => resized_height + (params.height as i32 - resized_height) / 2,
     };
-    let mut chunk = 0u8;
-    let mut current_bit = 0u8;
-    let mut bytes = Vec::<u8>::new();
-    bytes.push(0x00);
-    let mut lum_sum: f32 = 0.0;
-    for y in 0..output_height {
-        for x in 0..params.width {
-            let src_x = x as i32 + x_offset;
-            let mut make_visible = false;
-            if src_x < 0 || src_x >= resized_width || y >= resized_height {
-                make_visible = params.background_visible;
-            } else {
-                make_visible = is_pixel_dark(&resized, src_x as u32, y as u32, &params.threshold);
-            }
-            if params.inverse {
-                make_visible = !make_visible;
-            }
-            if make_visible {
-                chunk += 1u8.shl(current_bit);
-            }
-            current_bit += 1;
-            if current_bit == 8 {
-                bytes.push(chunk);
-                current_bit = 0;
-                chunk = 0;
-            }
-        }
-        if current_bit != 0 {
-            bytes.push(chunk);
-            current_bit = 0;
-            chunk = 0;
-        }
+    let mut bitmap = Bitmap::new(params.width, output_height as u8);
+    process_dark(params, &resized, &mut bitmap);
+    process(&params.threshold, &resized, &mut bitmap, 0.0..0.1);
+    process(&params.threshold, &resized, &mut bitmap, 0.1..0.2);
+    process(&params.threshold, &resized, &mut bitmap, 0.2..0.4);
+    process(&params.threshold, &resized, &mut bitmap, 0.4..0.65);
+    process(&params.threshold, &resized, &mut bitmap, 0.65..0.1);
+    if params.background_visible {
+        process_outside_and_inverting(&resized, &mut bitmap, params.background_visible);
     }
-
-    Bitmap {
-        width: params.width,
-        height: output_height as u8,
-        bytes,
+    if params.inverse {
+        bitmap.invert();
     }
+    return bitmap;
 }
 
-fn is_pixel_dark(image: &RgbaImage, x: u32, y: u32, threshold: &RangeInc) -> bool {
-    let pixel = image.get_pixel(x, y).0;
-    let r = pixel[0] as f32 / CHANNEL_MAX;
-    let g = pixel[1] as f32 / CHANNEL_MAX;
-    let b = pixel[2] as f32 / CHANNEL_MAX;
-    let a = pixel[3] as f32 / CHANNEL_MAX;
-
-    let luminance = (0.299 * r * r + 0.587 * g * g + 0.114 * b * b).sqrt() * a;
-    if !threshold.is_max() {
-        if luminance > threshold.end() {
-            return false
-        } else if luminance < threshold.start() {
-            return true
+fn process_dark(params: &Params, resized: &GrayImage, bitmap: &mut Bitmap) {
+    for_each_luminance(resized, bitmap, |bitmap, x, y, outside, luminance| {
+        if !outside && luminance < params.threshold.start() {
+            bitmap.set(x, y);
         }
-    }
-    let luminance = (luminance - threshold.start()) / threshold.size();
-    return is_dark(luminance, x, y);
+    });
 }
 
-fn is_dark(luminance: f32, x: u32, y: u32) -> bool {
-    return match luminance {
-        l if l > 0.8 => (x % 2 == 0) == (y % 2 == 0),
-        l if l > 0.6 => ((x + ((y / 2) % 2)) % 2 == 0) && (y % 2 == 0),
-        l if l > 0.4 => (x % 3 == 0) && (y % 3 == 0),
-        l if l > 0.2 => ((x + (y / 2) % 2 * 2) % 4 == 0) && ((y) % 2 == 0),
-        _ => (x % 4 == 0) == (y % 4 == 0),
-    };
+fn process_outside_and_inverting(
+    resized: &GrayImage,
+    bitmap: &mut Bitmap,
+    background_visible: bool,
+) {
+    for_each_luminance(resized, bitmap, |bitmap, x, y, outside, luminance| {
+        if background_visible && outside {
+            bitmap.set(x, y);
+        }
+    });
 }
 
-fn scale_to(image: &RgbaImage, params: &Params) -> RgbaImage {
+fn process(threshold: &RangeInc, resized: &GrayImage, bitmap: &mut Bitmap, range: Range<f32>) {
+    for_each_luminance(resized, bitmap, |bitmap, x, y, outside, luminance| {
+        if !outside && threshold.0.contains(&luminance) {
+            let luminance = (luminance - threshold.start()) / threshold.size();
+            if !range.contains(&luminance) {
+                return;
+            }
+            let already_bit_nearby = find_in_radius(bitmap, luminance, x as i32, y as i32);
+            if !already_bit_nearby {
+                bitmap.set(x, y);
+            }
+        }
+    });
+}
+
+fn for_each_luminance<F>(
+    image: &GrayImage,
+    bitmap: &mut Bitmap,
+    mut action: F,
+) where F: FnMut(&mut Bitmap, u32, u32, bool/*is outside*/, f32) {
+    let width = bitmap.width;
+    let height = bitmap.height;
+    for_each(0..height as u32, 0..width as u32, |x,y| {
+        if bitmap.get(x, y) { return; }
+        let bitmap_width = bitmap.width as u32;
+        let dif = bitmap_width - image.width();
+        let left = dif / 2;
+        let right = bitmap_width - left - dif % 2;
+        if x < left || x >= right {
+            action(bitmap, x, y, true, 0.0);
+            return;
+        }
+        let luminance = image.get_pixel(x - left, y).0[0] as f32 / 255.0;
+        action(bitmap, x, y, false, luminance);
+    });
+}
+
+fn scale_to(image: &RgbaImage, params: &Params) -> GrayImage {
     let dynamic = DynamicImage::from(image.clone());
     let resized = match params.scale_type {
         ScaleType::FillCenter => dynamic.resize_to_fill(params.width as u32, params.height as u32, FilterType::Nearest),
         ScaleType::FitCenter | ScaleType::FitBottom => dynamic.resize(params.width as u32, params.height as u32, FilterType::Nearest),
     };
-    return resized.to_rgba8();
+    return resized.to_luma8();
 }
 
-// unused:
-
-fn is_pixel_black2(image: &RgbaImage, x: u32, y: u32, threshold: f32, sum: f32) -> (bool, f32) {
-    let pixel = image.get_pixel(x, y).0;
-    let r = pixel[0] as f32 / CHANNEL_MAX;
-    let g = pixel[1] as f32 / CHANNEL_MAX;
-    let b = pixel[2] as f32 / CHANNEL_MAX;
-
-    let luminance = (0.299 * r * r + 0.587 * g * g + 0.114 * b * b).sqrt();
-    let sum = sum + luminance * threshold * 2.0;
-    if sum >= 1.0 {
-        (false, sum - 1.0)
-    } else {
-        (true, sum)
-    }
-}
-
-fn lum_sum(image: &RgbaImage, x: i32, y: i32) -> f32 {
-    let width = image.width() as i32;
-    let height = image.height() as i32;
-    let mut sum = 0.0;
-    let mut count: f32 = 0.0;
-    for dy in -1..1 {
-        let y = y + dy;
-        for dx in -1..1 {
+pub fn find_in_radius(bitmap: &Bitmap, luminance: f32, x: i32, y: i32) -> bool {
+    let radius = luminance * MAX_RADIUS;
+    let half = radius as i32;
+    for dy in -half..half {
+        for dx in -half..half {
             let x = x + dx;
-            if x < 0 || x >= width || y < 0 || y >= height {
-                continue
+            let y = y + dy;
+            if x < 0 || y < 0 || x as u8 >= bitmap.width || y as u8 >= bitmap.height {
+                continue;
+            } else if !bitmap.get(x as u32, y as u32) {
+                continue;
+            } else if radius >= ((dx*dx + dy*dy) as f32).sqrt() {
+                return true;
             }
-            let pixel = image.get_pixel(x as u32, y as u32).0;
-            let r = pixel[0] as f32 / CHANNEL_MAX;
-            let g = pixel[1] as f32 / CHANNEL_MAX;
-            let b = pixel[2] as f32 / CHANNEL_MAX;
-            sum += (0.299 * r * r + 0.587 * g * g + 0.114 * b * b).sqrt();
-            count += 1.0;
         }
     }
-    sum / count
+    return false;
 }
-
-

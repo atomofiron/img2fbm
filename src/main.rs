@@ -8,7 +8,6 @@ use std::fmt::{Debug, Display, format, Formatter};
 use std::hash::{Hash, Hasher};
 use std::io::{Read, Write};
 use std::num::{IntErrorKind, ParseIntError};
-use std::ops::Shr;
 use std::path::Path;
 use clap::{Parser, Arg, ArgAction, ArgMatches, Command, CommandFactory};
 use clap::error::ErrorKind;
@@ -28,6 +27,7 @@ use crate::ext::path_ext::{EXT_GIF, EXT_PICTURE, PathExt};
 
 
 fn main() {
+
     let cli = Cli::parse();
     cli.path.file_name().expect("invalid input file path");
     let params = Params::from(cli);
@@ -138,10 +138,8 @@ fn bm2preview(bitmap: &Bitmap) -> GrayImage {
     let mut image = GrayImage::new(width * scale, height * scale);
     for y in 0..height {
         for x in 0..width {
-            let index = width * y + x;
             // +1 because of the first byte is extra 0x00
-            let byte = bitmap.bytes.get(index as usize / 8 + 1).unwrap();
-            let bit = byte.shr(index % 8) % 2 == 1;
+            let bit = bitmap.get(x, y);
             if !bit {
                 for x in (x * scale)..(x * scale + scale) {
                     for y in (y * scale)..(y * scale + scale) {
