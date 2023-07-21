@@ -1,4 +1,4 @@
-use std::ops::{Deref, Range};
+use std::ops::Range;
 
 pub fn for_each<F>(
     ordinates: Range<u32>,

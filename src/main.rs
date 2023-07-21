@@ -2,18 +2,13 @@ mod core;
 mod ext;
 
 use std::fs::{create_dir_all, File, OpenOptions};
-use std::{env, fs, io};
+use std::fs;
 use std::collections::hash_map::DefaultHasher;
-use std::fmt::{Debug, Display, format, Formatter};
 use std::hash::{Hash, Hasher};
 use std::io::{Read, Write};
-use std::num::{IntErrorKind, ParseIntError};
 use std::path::Path;
 use clap::{Parser, Arg, ArgAction, ArgMatches, Command, CommandFactory};
-use clap::error::ErrorKind;
 use image::{ColorType, Delay, DynamicImage, Frame, GenericImage, GenericImageView, GrayImage, ImageFormat, Luma, Rgba};
-use image::codecs::pnm::ArbitraryTuplType::Grayscale;
-use crate::core::background::Background;
 use crate::core::bitmap::Bitmap;
 use crate::core::color::Color;
 use crate::core::args::Cli;
@@ -23,7 +18,7 @@ use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::AnimationDecoder;
 use crate::core::meta::{FrameData, get_manifest, get_meta};
 use crate::core::params::Params;
-use crate::ext::path_ext::{EXT_GIF, EXT_PICTURE, PathExt};
+use crate::ext::path_ext::{EXT_GIF, EXT_PICTURE};
 
 
 fn main() {

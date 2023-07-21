@@ -1,10 +1,9 @@
 use std::fmt::Display;
-use std::ops::Deref;
 use crate::core::args::Cli;
 use crate::core::background::Background;
 use crate::core::scale_type::ScaleType;
 use crate::core::threshold::RangeInc;
-use crate::ext::path_ext::{EXT_PNG, EXT_GIF, EXT_BM, EXT_PICTURE, PathExt};
+use crate::ext::path_ext::{EXT_PNG, EXT_GIF, EXT_BM, PathExt};
 
 
 pub const TARGET_WIDTH: u8 = 128;

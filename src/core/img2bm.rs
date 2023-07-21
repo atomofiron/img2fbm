@@ -1,4 +1,3 @@
-use std::fs::FileType;
 use std::ops::Range;
 use image::{DynamicImage, GrayImage, RgbaImage};
 use image::imageops::FilterType;
@@ -9,8 +8,6 @@ use crate::core::threshold::RangeInc;
 use crate::ext::range_ext::for_each;
 
 
-const CHANNEL_MAX: f32 = 255.0;
-const BYTE_MAX: u8 = 255;
 const MAX_RADIUS: f32 = 4.0;
 
 pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
