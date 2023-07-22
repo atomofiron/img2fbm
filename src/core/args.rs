@@ -91,6 +91,6 @@ fn str_to_threshold(value: &str) -> Result<Threshold, String> {
 }
 
 fn str_to_frame_cut(value: &str) -> Result<FrameCut, String> {
-    let from_to = Values::<u32>::from::<u32>(value, 0, 0)?;
+    let from_to = Values::<usize>::from::<usize>(value, 0, 0)?;
     return Ok(FrameCut { start: from_to.first, end: from_to.second });
 }

@@ -9,7 +9,7 @@ pub struct Threshold {
 impl Threshold {
 
     pub fn is_empty(&self) -> bool {
-        self.dark == 0.0 && self.light == 1.0
+        self.dark == self.light
     }
 
     pub fn is_max(&self) -> bool {
@@ -21,7 +21,7 @@ impl Threshold {
     }
 
     pub fn contains(&self, other: f32) -> bool {
-        self.dark > other && other < self.light
+        self.dark < other && other < self.light
     }
 }
 

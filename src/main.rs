@@ -43,13 +43,23 @@ fn from_picture(params: &Params) {
 
 fn from_gif(params: &Params) {
     let mut preview_frames = Vec::<GrayImage>::new();
-    create_dir_all(params.dolphin_anim_path.as_str()).unwrap();
+    if !params.only_preview {
+        create_dir_all(params.dolphin_anim_path.as_str()).unwrap();
+    }
     let file = File::open(params.path_src.clone()).unwrap();
     let mut decoder = GifDecoder::new(file).unwrap();
     let mut hashes = Vec::<u64>::new();
     let mut data = Vec::<FrameData>::new();
     let mut min_duration = -1f32;
-    for frame in decoder.into_frames().map(|it| it.unwrap()) {
+
+    let frames = decoder.into_frames().collect_frames().unwrap();
+    let min_index = params.cut.start;
+    let max_index = frames.len() - 1 - params.cut.end;
+    let frames_iter = frames.into_iter()
+        .enumerate()
+        .filter(|&(i, _)| { i >= min_index && i <= max_index })
+        .map(|(_, it)| it);
+    for frame in frames_iter {
         // todo use rayon
         let image = frame.buffer().to_owned();
         let bitmap = img2bm(&image, &params);

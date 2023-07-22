@@ -3,8 +3,8 @@ use std::ops::{Range, RangeInclusive};
 
 
 pub struct FrameCut {
-    pub start: u32,
-    pub end: u32,
+    pub start: usize,
+    pub end: usize,
 }
 
 impl Display for FrameCut {
