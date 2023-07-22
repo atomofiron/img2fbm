@@ -72,7 +72,7 @@ pub struct Cli {
     pub threshold: Option<Threshold>,
 
     /// Animation speed ratio
-    #[arg(short, long, value_name = "speed", default_value_t = 1.0)]
+    #[arg(short, long, value_name = "speed", default_value_t = 1.0, value_parser = str_to_speed)]
     pub speed: f32,
 
     /// Drop some frames from the start and from the end. For example 5:, :8 or 2:3, the last one drops 2 frames from start and 3 from the end. [default: 0:0]
@@ -93,4 +93,12 @@ fn str_to_threshold(value: &str) -> Result<Threshold, String> {
 fn str_to_frame_cut(value: &str) -> Result<FrameCut, String> {
     let from_to = Values::<usize>::from::<usize>(value, 0, 0)?;
     return Ok(FrameCut { start: from_to.first, end: from_to.second });
+}
+
+fn str_to_speed(value: &str) -> Result<f32, String> {
+    let value = value.parse::<f32>().map_err(|err| err.to_string())?;
+    if value <= 0.0 {
+        panic!("Invalid speed ratio, must greater then 0");
+    }
+    return Ok(value);
 }

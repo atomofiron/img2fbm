@@ -83,6 +83,7 @@ fn from_gif(params: &Params) {
         if min_duration < 0.0 || f_data.duration < min_duration {
             min_duration = f_data.duration;
         }
+        min_duration /= params.speed;
         data.push(f_data);
     }
     for f_data in data.iter_mut() {
@@ -117,7 +118,8 @@ fn bm2preview_gif(params: &Params, data: &Vec::<FrameData>, preview_frames: &Vec
     for fd in data {
         let image = preview_frames.get(fd.index).unwrap();
         let dynamic = DynamicImage::from(image.clone());
-        let delay = Delay::from_numer_denom_ms(fd.duration as u32, 1);
+        let duration = (fd.duration / params.speed) as u32;
+        let delay = Delay::from_numer_denom_ms(duration, 1);
         let frame = Frame::from_parts(dynamic.to_rgba8(), 0, 0, delay);
         frames.push(frame);
     }
