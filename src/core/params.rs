@@ -1,14 +1,20 @@
 use std::fmt::Display;
+use clap::Parser;
 use crate::core::args::Cli;
 use crate::core::background::Background;
 use crate::core::scale_type::ScaleType;
 use crate::core::threshold::RangeInc;
-use crate::ext::path_ext::{EXT_PNG, EXT_GIF, EXT_BM, PathExt};
+use crate::ext::path_ext::{PathExt, EXT_PNG, EXT_GIF, EXT_BM, EXT_PICTURE};
 
 
-pub const TARGET_WIDTH: u8 = 128;
+const TARGET_WIDTH: u8 = 128;
+
+pub enum FileType {
+    Picture, Gif
+}
 
 pub struct Params {
+    pub file_type: FileType,
     pub width: u8,
     pub height: u8,
     pub preview: bool,
@@ -36,12 +42,18 @@ pub struct Params {
 }
 
 impl Params {
-    pub fn from(cli: Cli) -> Params {
-        if let None = cli.path.extension() {
-            panic!("invalid input file")
-        }
-        let path_name = cli.path.get_path_name();
+
+    pub fn parse() -> Params {
+        let cli = Cli::parse();
+        cli.path.extension().expect("invalid input file");
+        cli.path.file_name().expect("invalid input file path");
         let input_ext = cli.path.get_ext().to_lowercase();
+        let file_type = match () {
+            _ if EXT_PICTURE.contains(&&*input_ext) => FileType::Picture,
+            _ if input_ext == EXT_GIF => FileType::Gif,
+            _ => panic!("invalid input file format"),
+        };
+        let path_name = cli.path.get_path_name();
         let preview_path_name = format!("{}_preview", cli.path.get_path_name());
         let preview_picture_path = format!("{preview_path_name}.{EXT_PNG}");
         let preview_gif_path = format!("{preview_path_name}.{EXT_GIF}");
@@ -52,6 +64,7 @@ impl Params {
         let meta_path = format!("{dolphin_anim_path}meta.txt");
         let manifest_path = format!("{dolphin_path}manifest.txt");
         Params {
+            file_type,
             width: TARGET_WIDTH,
             height: cli.height,
             preview: cli.preview || cli.op,
@@ -82,14 +95,8 @@ impl Params {
             manifest_path,
         }
     }
-}
 
-impl Params {
     pub fn path_bm<I>(&self, index: I) -> String where I: Display {
         format!("{}frame_{}.{EXT_BM}", self.dolphin_anim_path, index)
     }
 }
-
-/*impl From<Cli> for Params {
-    fn from(cli: Cli) -> Params {}
-}*/

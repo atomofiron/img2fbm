@@ -17,22 +17,14 @@ use crate::core::img2bm::img2bm;
 use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::AnimationDecoder;
 use crate::core::meta::{FrameData, get_manifest, get_meta};
-use crate::core::params::Params;
-use crate::ext::path_ext::{EXT_GIF, EXT_PICTURE};
+use crate::core::params::{FileType, Params};
 
 
 fn main() {
-
-    let cli = Cli::parse();
-    cli.path.file_name().expect("invalid input file path");
-    let params = Params::from(cli);
-
-    if EXT_PICTURE.contains(&&*params.input_ext) {
-        from_picture(&params)
-    } else if params.input_ext == EXT_GIF {
-        from_gif(&params)
-    } else {
-        panic!("invalid input file format")
+    let params = Params::parse();
+    match params.file_type {
+        FileType::Picture => from_picture(&params),
+        FileType::Gif => from_gif(&params),
     }
 }
 
