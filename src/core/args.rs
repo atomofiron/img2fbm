@@ -6,7 +6,7 @@ use crate::core::background::Background;
 use crate::core::frame_cut::FrameCut;
 use crate::core::values::Values;
 use crate::core::scale_type::ScaleType;
-use crate::core::threshold::RangeInc;
+use crate::core::threshold::Threshold;
 
 #[derive(Debug, Parser)]
 
@@ -69,7 +69,7 @@ pub struct Cli {
 
     /// Threshold value or range of pixel brightness as a percentage, such as 20:80, 40:, :60, 50:50 or 50 [default: 20:80]
     #[arg(short, long, value_name = "percentage[:percentage]", value_parser = str_to_threshold)]
-    pub threshold: Option<RangeInc>,
+    pub threshold: Option<Threshold>,
 
     /// Animation speed ratio
     #[arg(short, long, value_name = "speed", default_value_t = 1.0)]
@@ -80,11 +80,14 @@ pub struct Cli {
     pub cut: Option<FrameCut>,
 }
 
-fn str_to_threshold(value: &str) -> Result<RangeInc, String> {
+fn str_to_threshold(value: &str) -> Result<Threshold, String> {
     let from_to = Values::<u8>::from::<u8>(value, 0, 100)?;
-    let start = from_to.first as f32 / 100.0;
-    let end = from_to.second as f32 / 100.0;
-    return Ok(RangeInc(start..=end));
+    if from_to.first > from_to.second {
+        panic!("The first value must be greater than the second value")
+    }
+    let dark = from_to.first as f32 / 100.0;
+    let light = from_to.second as f32 / 100.0;
+    return Ok(Threshold { dark, light });
 }
 
 fn str_to_frame_cut(value: &str) -> Result<FrameCut, String> {

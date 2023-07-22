@@ -4,7 +4,7 @@ use image::imageops::FilterType;
 use crate::core::bitmap::Bitmap;
 use crate::core::params::Params;
 use crate::core::scale_type::ScaleType;
-use crate::core::threshold::RangeInc;
+use crate::core::threshold::Threshold;
 use crate::ext::range_ext::for_each;
 
 
@@ -19,11 +19,13 @@ pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
     };
     let mut bitmap = Bitmap::new(params.width, output_height as u8);
     process_dark(params, &resized, &mut bitmap);
-    process(&params.threshold, &resized, &mut bitmap, 0.0..0.1);
-    process(&params.threshold, &resized, &mut bitmap, 0.1..0.2);
-    process(&params.threshold, &resized, &mut bitmap, 0.2..0.4);
-    process(&params.threshold, &resized, &mut bitmap, 0.4..0.65);
-    process(&params.threshold, &resized, &mut bitmap, 0.65..0.1);
+    if !params.threshold.is_empty() {
+        process(&params.threshold, &resized, &mut bitmap, 0.0..0.1);
+        process(&params.threshold, &resized, &mut bitmap, 0.1..0.2);
+        process(&params.threshold, &resized, &mut bitmap, 0.2..0.4);
+        process(&params.threshold, &resized, &mut bitmap, 0.4..0.65);
+        process(&params.threshold, &resized, &mut bitmap, 0.65..0.1);
+    }
     if params.background_visible {
         process_outside_and_inverting(&resized, &mut bitmap, params.background_visible);
     }
@@ -35,7 +37,7 @@ pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
 
 fn process_dark(params: &Params, resized: &GrayImage, bitmap: &mut Bitmap) {
     for_each_luminance(resized, bitmap, |bitmap, x, y, outside, luminance| {
-        if !outside && luminance < params.threshold.start() {
+        if !outside && luminance < params.threshold.dark {
             bitmap.set(x, y);
         }
     });
@@ -53,10 +55,10 @@ fn process_outside_and_inverting(
     });
 }
 
-fn process(threshold: &RangeInc, resized: &GrayImage, bitmap: &mut Bitmap, range: Range<f32>) {
+fn process(threshold: &Threshold, resized: &GrayImage, bitmap: &mut Bitmap, range: Range<f32>) {
     for_each_luminance(resized, bitmap, |bitmap, x, y, outside, luminance| {
-        if !outside && threshold.0.contains(&luminance) {
-            let luminance = (luminance - threshold.start()) / threshold.size();
+        if !outside && threshold.contains(luminance) {
+            let luminance = (luminance - threshold.dark) / threshold.size();
             if !range.contains(&luminance) {
                 return;
             }

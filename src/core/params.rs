@@ -4,7 +4,7 @@ use crate::core::args::Cli;
 use crate::core::background::Background;
 use crate::core::frame_cut::FrameCut;
 use crate::core::scale_type::ScaleType;
-use crate::core::threshold::RangeInc;
+use crate::core::threshold::Threshold;
 use crate::ext::path_ext::{PathExt, EXT_PNG, EXT_GIF, EXT_BM, EXT_PICTURE};
 
 
@@ -23,7 +23,7 @@ pub struct Params {
     pub preview_scale: u32,
     pub inverse: bool,
     pub background_visible: bool,
-    pub threshold: RangeInc,
+    pub threshold: Threshold,
     pub cut: Option<FrameCut>,
     pub scale_type: ScaleType,
     pub speed: f32,
@@ -79,7 +79,7 @@ impl Params {
                 Some(Background::Visible) => true,
                 Some(Background::Invisible) => false,
             },
-            threshold: cli.threshold.unwrap_or(RangeInc(0.2..=0.8)),
+            threshold: cli.threshold.unwrap_or(Threshold { dark: 0.2, light: 0.8 }),
             cut: cli.cut,
             scale_type: cli.scale_type.unwrap_or(ScaleType::FitBottom),
             speed: cli.speed,

@@ -1,42 +1,47 @@
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::RangeInclusive;
 
 
-pub struct RangeInc(pub RangeInclusive<f32>);
+pub struct Threshold {
+    pub dark: f32,
+    pub light: f32,
+}
 
-impl RangeInc {
+impl Threshold {
 
-    pub fn start(&self) -> f32 {
-        *self.0.start()
-    }
-
-    pub fn end(&self) -> f32 {
-        *self.0.end()
+    pub fn is_empty(&self) -> bool {
+        self.dark == 0.0 && self.light == 1.0
     }
 
     pub fn is_max(&self) -> bool {
-        self.start() == 0.0 && self.end() == 1.0
+        self.dark == 0.0 && self.light == 1.0
     }
 
     pub fn size(&self) -> f32 {
-        self.end() - self.start()
+        self.light - self.dark
+    }
+
+    pub fn contains(&self, other: f32) -> bool {
+        self.dark > other && other < self.light
     }
 }
 
-impl Display for RangeInc {
+impl Display for Threshold {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}", self.start(), self.end())
+        write!(f, "{}:{}", self.dark, self.light)
     }
 }
 
-impl Debug for RangeInc {
+impl Debug for Threshold {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(self, f)
     }
 }
 
-impl Clone for RangeInc {
+impl Clone for Threshold {
     fn clone(&self) -> Self {
-        RangeInc(self.0.clone())
+        Threshold {
+            dark: self.dark,
+            light: self.light,
+        }
     }
 }
