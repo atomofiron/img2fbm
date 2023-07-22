@@ -4,7 +4,7 @@ use clap::{CommandFactory, Parser};
 use regex::Regex;
 use crate::core::background::Background;
 use crate::core::frame_cut::FrameCut;
-use crate::core::from_to::Values;
+use crate::core::values::Values;
 use crate::core::scale_type::ScaleType;
 use crate::core::threshold::RangeInc;
 
