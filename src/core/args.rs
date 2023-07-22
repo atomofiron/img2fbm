@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use clap::{CommandFactory, Parser};
 use regex::Regex;
 use crate::core::background::Background;
+use crate::core::frame_cut::FrameCut;
+use crate::core::from_to::Values;
 use crate::core::scale_type::ScaleType;
 use crate::core::threshold::RangeInc;
 
@@ -32,7 +34,7 @@ pub struct Cli {
     pub height: u8,
 
     /// Scale type [default: fit-bottom]
-    #[arg(short, long, value_name = "type")]
+    #[arg(long = "st", value_name = "type")]
     pub scale_type: Option<ScaleType>,
     // thread 'main' has overflowed its stack
     // fatal runtime error: stack overflow
@@ -68,38 +70,24 @@ pub struct Cli {
     /// Threshold value or range of pixel brightness as a percentage, such as 20:80, 40:, :60, 50:50 or 50 [default: 20:80]
     #[arg(short, long, value_name = "percentage[:percentage]", value_parser = str_to_threshold)]
     pub threshold: Option<RangeInc>,
+
+    /// Animation speed ratio
+    #[arg(short, long, value_name = "speed", default_value_t = 1.0)]
+    pub speed: f32,
+
+    /// Drop some frames from the start and from the end. For example 5:, :8 or 2:3, the last one drops 2 frames from start and 3 from the end. [default: 0:0]
+    #[arg(short, long, value_name = "count[:count]", value_parser = str_to_frame_cut)]
+    pub cut: Option<FrameCut>,
 }
 
 fn str_to_threshold(value: &str) -> Result<RangeInc, String> {
-    // seems like clap contains a bug
-    let pattern = Regex::new(r":|\.\.=").unwrap();
-    let parts = pattern.split(value).collect::<Vec<&str>>();
-    let cause = || format!("'{value}' isn't a valid range");
-    if parts.is_empty() || parts.len() > 2 {
-        return Err(cause());
-    }
-    let first = *parts.first().unwrap();
-    let first = if first.is_empty() { 0.0 } else {
-        parse(first).map_err(|_| cause())?
-    };
-    if parts.len() == 1 {
-        return Ok(RangeInc(first..=first))
-    }
-    let second = *parts.last().unwrap();
-    let second = if second.is_empty() { 1.0 } else {
-        parse(second).map_err(|_| cause())?
-    };
-    return Ok(RangeInc(first..=second));
+    let from_to = Values::<u8>::from::<u8>(value, 0, 100)?;
+    let start = from_to.first as f32 / 100.0;
+    let end = from_to.second as f32 / 100.0;
+    return Ok(RangeInc(start..=end));
 }
 
-fn parse(value: &str) -> Result<f32, ()> {
-    let int = value.parse::<u8>();
-    if let Ok(value) = int {
-        return Ok(value as f32 / 100.0);
-    }
-    let float = value.parse::<f32>();
-    if let Ok(value) = float {
-        return Ok(value);
-    }
-    return Err(());
+fn str_to_frame_cut(value: &str) -> Result<FrameCut, String> {
+    let from_to = Values::<u32>::from::<u32>(value, 0, 0)?;
+    return Ok(FrameCut { start: from_to.first, end: from_to.second });
 }

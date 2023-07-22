@@ -2,6 +2,7 @@ use std::fmt::Display;
 use clap::Parser;
 use crate::core::args::Cli;
 use crate::core::background::Background;
+use crate::core::frame_cut::FrameCut;
 use crate::core::scale_type::ScaleType;
 use crate::core::threshold::RangeInc;
 use crate::ext::path_ext::{PathExt, EXT_PNG, EXT_GIF, EXT_BM, EXT_PICTURE};
@@ -23,7 +24,9 @@ pub struct Params {
     pub inverse: bool,
     pub background_visible: bool,
     pub threshold: RangeInc,
+    pub cut: Option<FrameCut>,
     pub scale_type: ScaleType,
+    pub speed: f32,
     pub with_manifest: bool,
     pub replace_manifest: bool,
 
@@ -77,7 +80,9 @@ impl Params {
                 Some(Background::Invisible) => false,
             },
             threshold: cli.threshold.unwrap_or(RangeInc(0.2..=0.8)),
+            cut: cli.cut,
             scale_type: cli.scale_type.unwrap_or(ScaleType::FitBottom),
+            speed: cli.speed,
             with_manifest: cli.target.is_some(),
             replace_manifest: cli.replace_manifest,
 
