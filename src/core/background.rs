@@ -1,21 +1,22 @@
-use std::fmt::{Display, Result, Debug, Formatter};
+use std::fmt::{Display, Debug, Formatter};
 use clap::builder::PossibleValue;
 use clap::ValueEnum;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Background {
-    Invisible,
-    Visible,
+    Invisible, Left, Right, Visible,
 }
 
 impl ValueEnum for Background {
     fn value_variants<'a>() -> &'a [Self] {
-        &[Background::Invisible, Background::Visible]
+        &[Background::Invisible, Background::Left, Background::Right, Background::Visible]
     }
 
     fn to_possible_value<'a>(&self) -> Option<PossibleValue> {
         Some(match self {
             Background::Invisible => PossibleValue::new("invisible").help("Keep transparent, white, unset, zero"),
+            Background::Left => PossibleValue::new("left").help("Make visible on the right side"),
+            Background::Right => PossibleValue::new("right").help("Make visible on the left side"),
             Background::Visible => PossibleValue::new("visible").help("Make visible, black, set, unit"),
         })
     }

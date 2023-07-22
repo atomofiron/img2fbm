@@ -1,6 +1,7 @@
 use std::ops::Range;
 use image::{DynamicImage, GrayImage, RgbaImage};
 use image::imageops::FilterType;
+use crate::core::background::Background;
 use crate::core::bitmap::Bitmap;
 use crate::core::params::Params;
 use crate::core::scale_type::ScaleType;
@@ -26,8 +27,8 @@ pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
         process(&params.threshold, &resized, &mut bitmap, 0.4..0.65);
         process(&params.threshold, &resized, &mut bitmap, 0.65..0.1);
     }
-    if params.background_visible {
-        process_outside_and_inverting(&resized, &mut bitmap, params.background_visible);
+    if params.background != Background::Invisible {
+        process_outside_and_inverting(&resized, &mut bitmap, params.background);
     }
     if params.inverse {
         bitmap.invert();
@@ -46,11 +47,15 @@ fn process_dark(params: &Params, resized: &GrayImage, bitmap: &mut Bitmap) {
 fn process_outside_and_inverting(
     resized: &GrayImage,
     bitmap: &mut Bitmap,
-    background_visible: bool,
+    background: Background,
 ) {
     for_each_luminance(resized, bitmap, |bitmap, x, y, outside, luminance| {
-        if background_visible && outside {
-            bitmap.set(x, y);
+        match () {
+            _ if !outside => (),
+            _ if background == Background::Visible => bitmap.set(x, y),
+            _ if background == Background::Left && x < (bitmap.width as u32 / 2) => bitmap.set(x, y),
+            _ if background == Background::Right && x > (bitmap.width as u32 / 2) => bitmap.set(x, y),
+            _ => (),
         }
     });
 }
