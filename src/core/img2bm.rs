@@ -11,7 +11,7 @@ use crate::ext::range_ext::for_each;
 const MAX_RADIUS: f32 = 4.0;
 
 pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
-    let resized = scale_to(image, params);
+    let resized = resize(image, params);
     let resized_height = resized.height() as i32;
     let output_height = match params.scale_type {
         ScaleType::FillCenter | ScaleType::FitBottom => resized_height,
@@ -92,7 +92,7 @@ fn for_each_luminance<F>(
     });
 }
 
-fn scale_to(image: &RgbaImage, params: &Params) -> GrayImage {
+fn resize(image: &RgbaImage, params: &Params) -> GrayImage {
     let dynamic = DynamicImage::from(image.clone());
     let resized = match params.scale_type {
         ScaleType::FillCenter => dynamic.resize_to_fill(params.width as u32, params.height as u32, FilterType::Nearest),
