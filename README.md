@@ -9,7 +9,7 @@ From [Releases](https://github.com/Atomofiron/img2fbm/releases)
 <br>✅ MacOS ARM
 <br>✅ Linux x86_64
 <br>😴 Linux ARM
-<br>💩 Windows x86_64
+<br>✅ Windows x86_64
 
 # Samples
 <img src=https://github.com/Atomofiron/img2fbm/assets/14147217/efc04271-4cea-4a58-878a-38c83db58200 height=64 alt=yuno-eyes />
