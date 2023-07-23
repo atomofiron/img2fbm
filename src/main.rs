@@ -15,6 +15,7 @@ use crate::core::img2bm::img2bm;
 
 use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::AnimationDecoder;
+use indicatif::{ProgressBar, ProgressStyle};
 use crate::core::meta::{FrameData, get_manifest, get_meta};
 use crate::core::params::{FileType, Params};
 
@@ -41,6 +42,18 @@ fn from_picture(params: &Params) {
     }
 }
 
+fn new_progress(length: usize, prefix: &str) -> ProgressBar {
+    let mut progressbar = ProgressBar::new(length as u64);
+    progressbar.set_prefix(String::from(prefix));
+    progressbar.set_message("done");
+    let style = ProgressStyle::with_template("{spinner:.white} {prefix} {msg} [{bar:.white/white}] {pos}/{len}")
+        .unwrap()
+        .progress_chars("#>-")
+        .tick_chars("-\\|/#");
+    progressbar.set_style(style);
+    return progressbar;
+}
+
 fn from_gif(params: &Params) {
     let mut preview_frames = Vec::<GrayImage>::new();
     if !params.only_preview {
@@ -55,6 +68,7 @@ fn from_gif(params: &Params) {
     let frames = decoder.into_frames().collect_frames().unwrap();
     let min_index = params.cut.start;
     let max_index = frames.len() - 1 - params.cut.end;
+    let bar = new_progress(max_index + 1 - min_index, "Converting...");
     let frames_iter = frames.into_iter()
         .enumerate()
         .filter(|&(i, _)| { i >= min_index && i <= max_index })
@@ -85,7 +99,10 @@ fn from_gif(params: &Params) {
         }
         min_duration /= params.speed;
         data.push(f_data);
+        bar.inc(1);
     }
+    bar.finish();
+
     for f_data in data.iter_mut() {
         f_data.duration = (f_data.duration / min_duration).round() * min_duration;
     }
@@ -110,10 +127,10 @@ fn write_manifest(params: &Params) {
         .open(manifest_path)
         .unwrap();
     manifest_file.write(manifest_part.as_bytes()).unwrap();
-
 }
 
 fn bm2preview_gif(params: &Params, data: &Vec::<FrameData>, preview_frames: &Vec::<GrayImage>) {
+    let bar = new_progress(preview_frames.len(), "Generating preview...");
     let mut frames = Vec::<Frame>::new();
     for fd in data {
         let image = preview_frames.get(fd.index).unwrap();
@@ -122,11 +139,13 @@ fn bm2preview_gif(params: &Params, data: &Vec::<FrameData>, preview_frames: &Vec
         let delay = Delay::from_numer_denom_ms(duration, 1);
         let frame = Frame::from_parts(dynamic.to_rgba8(), 0, 0, delay);
         frames.push(frame);
+        bar.inc(1);
     }
     let preview_file = File::create(params.preview_gif_path.clone()).unwrap();
     let mut encoder = GifEncoder::new(preview_file);
     encoder.set_repeat(Repeat::Infinite).unwrap();
     encoder.encode_frames(frames.into_iter()).unwrap();
+    bar.finish();
 }
 
 fn bm2preview(bitmap: &Bitmap, scale: u32) -> GrayImage {
