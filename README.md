@@ -1,10 +1,17 @@
 # img2fbm
 Image to Flipper bitmap converter
 
-
 https://github.com/Atomofiron/img2fbm/assets/14147217/59cbb785-d17d-46e0-a8fe-b8a8210959ec
 
+# Download
+From [Releases](https://github.com/Atomofiron/img2fbm/releases)
+<br>✅ MacOS x86_64
+<br>✅ MacOS ARM
+<br>✅ Linux x86_64
+<br>😴 Linux ARM
+<br>💩 Windows x86_64
 
+# Samples
 <img src=https://github.com/Atomofiron/img2fbm/assets/14147217/efc04271-4cea-4a58-878a-38c83db58200 height=64 alt=yuno-eyes />
 <img src=https://github.com/Atomofiron/img2fbm/assets/14147217/a2160d4e-5e24-414e-8a72-fc67b410df87 height=64 alt=yuno-eyes_preview />
 <br>
