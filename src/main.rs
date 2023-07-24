@@ -10,14 +10,13 @@ use std::path::Path;
 use clap::{Parser, Arg, ArgAction, ArgMatches, Command, CommandFactory};
 use image::{ColorType, Delay, DynamicImage, Frame, GrayImage, ImageFormat, Luma};
 use crate::core::bitmap::Bitmap;
-use crate::core::args::Cli;
 use crate::core::img2bm::img2bm;
 
 use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::AnimationDecoder;
 use indicatif::{ProgressBar, ProgressStyle};
 use crate::core::meta::{FrameData, get_manifest, get_meta};
-use crate::core::params::{FileType, Params};
+use crate::core::params_pkg::params::{FileType, Params};
 
 
 fn main() {

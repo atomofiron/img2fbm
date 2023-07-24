@@ -12,10 +12,6 @@ impl Threshold {
         self.dark == self.light
     }
 
-    pub fn is_max(&self) -> bool {
-        self.dark == 0.0 && self.light == 1.0
-    }
-
     pub fn size(&self) -> f32 {
         self.light - self.dark
     }

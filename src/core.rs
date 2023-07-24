@@ -1,11 +1,5 @@
-pub mod args;
-pub mod background;
-pub mod threshold;
 pub mod bitmap;
 pub mod img2bm;
 pub mod color;
 pub mod meta;
-pub mod params;
-pub mod scale_type;
-pub mod frame_cut;
-mod values;
+pub mod params_pkg;

@@ -1,11 +1,11 @@
 use std::ops::Range;
 use image::{DynamicImage, GrayImage, RgbaImage};
 use image::imageops::FilterType;
-use crate::core::background::Background;
+use crate::core::params_pkg::background::Background;
 use crate::core::bitmap::Bitmap;
-use crate::core::params::Params;
-use crate::core::scale_type::ScaleType;
-use crate::core::threshold::Threshold;
+use crate::core::params_pkg::params::Params;
+use crate::core::params_pkg::scale_type::ScaleType;
+use crate::core::params_pkg::threshold::Threshold;
 use crate::ext::range_ext::for_each;
 
 
