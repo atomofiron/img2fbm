@@ -2,11 +2,11 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 use clap::{CommandFactory, Parser};
 use regex::Regex;
-use crate::core::params_pkg::background::Background;
-use crate::core::params_pkg::frame_cut::FrameCut;
-use crate::core::params_pkg::values::Values;
-use crate::core::params_pkg::scale_type::ScaleType;
-use crate::core::params_pkg::threshold::Threshold;
+use crate::core::params::background::Background;
+use crate::core::params::frame_cut::FrameCut;
+use crate::core::params::values::Values;
+use crate::core::params::scale_type::ScaleType;
+use crate::core::params::threshold::Threshold;
 
 #[derive(Debug, Parser)]
 

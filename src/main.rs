@@ -16,7 +16,7 @@ use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
 use image::AnimationDecoder;
 use indicatif::{ProgressBar, ProgressStyle};
 use crate::core::meta::{FrameData, get_manifest, get_meta};
-use crate::core::params_pkg::params::{FileType, Params};
+use crate::core::params::params::{FileType, Params};
 
 
 fn main() {

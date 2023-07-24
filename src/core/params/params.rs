@@ -1,10 +1,10 @@
 use std::fmt::Display;
 use clap::Parser;
-use crate::core::params_pkg::args::Cli;
-use crate::core::params_pkg::background::Background;
-use crate::core::params_pkg::frame_cut::FrameCut;
-use crate::core::params_pkg::scale_type::ScaleType;
-use crate::core::params_pkg::threshold::Threshold;
+use crate::core::params::args::Cli;
+use crate::core::params::background::Background;
+use crate::core::params::frame_cut::FrameCut;
+use crate::core::params::scale_type::ScaleType;
+use crate::core::params::threshold::Threshold;
 use crate::ext::path_ext::{PathExt, EXT_PNG, EXT_GIF, EXT_BM, EXT_PICTURE};
 
 
