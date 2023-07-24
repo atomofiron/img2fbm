@@ -19,7 +19,7 @@ pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
         ScaleType::FitCenter => resized_height + (params.height as i32 - resized_height) / 2,
     };
     let mut bitmap = Bitmap::new(params.width, output_height as u8);
-    if !params.threshold.dark > 0.0 {
+    if params.threshold.dark > 0.0 {
         process_dark(params, &resized, &mut bitmap);
     }
     if !params.threshold.is_empty() {
