@@ -3,6 +3,84 @@ Image to Flipper bitmap converter
 
 https://github.com/Atomofiron/img2fbm/assets/14147217/59cbb785-d17d-46e0-a8fe-b8a8210959ec
 
+# Functionality
+
+<details>
+  <summary>img2fbm --help</summary>
+
+```
+Flipper bitmap files generator
+
+Usage: img2fbm [OPTIONS] <INPUT> [DOLPHIN]
+
+Arguments:
+  <INPUT>
+          Path to png|jpg|jpeg|gif file
+
+  [DOLPHIN]
+          Target path to the 'dolphin' directory, if the gif passed
+
+Options:
+  -H, --height <1-64>
+          Sets the height of output frame(s)
+          
+          [default: 64]
+
+      --st <type>
+          Scale type
+
+          Possible values:
+          - fill-center: Scale to fill animation bounds
+          - fit-center:  Scale to fit in animation bounds
+          - fit-bottom:  Scale to fit in animation bounds and align bottom
+
+          [default: fit-bottom]
+
+  -p, --preview
+          Generate the previews of result pictures
+
+      --op
+          Only preview, do not generate .bm and other Flipper Animation files
+
+      --ps <PS>
+          Preview scale ratio
+          
+          [default: 3]
+
+  -i, --inverse
+          Inverse output pixels
+
+  -r, --replace-manifest
+          Replace dolphin/manifest.txt file with a new one
+
+  -b, --background <background>
+          Set background pixels visible
+
+          Possible values:
+          - invisible: Keep transparent, white, unset, zero
+          - left:      Make visible on the right side
+          - right:     Make visible on the left side
+          - visible:   Make visible, black, set, unit
+
+          [default: invisible]
+
+  -t, --threshold <percentage[:percentage]>
+          Threshold value or range of pixel brightness as a percentage, such as 20:80, 40:, :60, 50:50 or 50
+
+          [default: 20:80]
+
+  -s, --speed <speed>
+          Animation speed ratio
+          
+          [default: 1]
+
+  -c, --cut <count[:count]>
+          Drop some frames from the start and from the end. For example 5:, :8 or 2:3, the last one drops 2 frames from start and 3 from the end.
+
+          [default: 0:0]
+```
+</details>
+
 # Download
 From [Releases](https://github.com/Atomofiron/img2fbm/releases)
 <br>✅ MacOS x86_64
