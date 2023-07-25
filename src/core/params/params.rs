@@ -48,21 +48,23 @@ impl Params {
 
     pub fn parse() -> Params {
         let cli = Cli::parse();
-        cli.path.extension().expect("invalid input file");
-        cli.path.file_name().expect("invalid input file path");
-        let input_ext = cli.path.get_ext().to_lowercase();
+        cli.source_path.extension().expect("invalid input file");
+        cli.source_path.file_name().expect("invalid input file path");
+        let input_ext = cli.source_path.get_ext().to_lowercase();
         let file_type = match () {
             _ if EXT_PICTURE.contains(&&*input_ext) => FileType::Picture,
             _ if input_ext == EXT_GIF => FileType::Gif,
             _ => panic!("invalid input file format"),
         };
-        let path_name = cli.path.get_path_name();
-        let preview_path_name = format!("{}_preview", cli.path.get_path_name());
+        let path_name = cli.source_path.get_path_name();
+        let preview_path_name = format!("{}_preview", cli.source_path.get_path_name());
         let preview_picture_path = format!("{preview_path_name}.{EXT_PNG}");
         let preview_gif_path = format!("{preview_path_name}.{EXT_GIF}");
         let picture_path_bm = format!("{path_name}.{EXT_BM}");
-        let dolphin_path = cli.target.clone().map(|it| it.as_dir()).unwrap_or_else(|| cli.path.get_parent());
-        let dolphin_anim_name = format!("{}_{TARGET_WIDTH}x{}", cli.path.get_name_no_ext(), cli.height);
+        let dolphin_path = cli.dolphin_path.clone()
+            .map(|it| it.as_dir())
+            .unwrap_or_else(|| cli.source_path.get_parent());
+        let dolphin_anim_name = format!("{}_{TARGET_WIDTH}x{}", cli.source_path.get_name_no_ext(), cli.height);
         let dolphin_anim_path = format!("{dolphin_path}{dolphin_anim_name}/");
         let meta_path = format!("{dolphin_anim_path}meta.txt");
         let manifest_path = format!("{dolphin_path}manifest.txt");
@@ -79,10 +81,10 @@ impl Params {
             cut: cli.cut.unwrap_or(FrameCut { start: 0, end: 0 }),
             scale_type: cli.scale_type.unwrap_or(ScaleType::FitBottom),
             speed: cli.speed,
-            with_manifest: cli.target.is_some(),
+            with_manifest: cli.dolphin_path.is_some(),
             replace_manifest: cli.replace_manifest,
 
-            path_src: cli.path.to_string(),
+            path_src: cli.source_path.to_string(),
             path_name,
             input_ext,
             preview_path_name,

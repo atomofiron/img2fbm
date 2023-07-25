@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 use clap::{CommandFactory, Parser};
 use regex::Regex;
+use crate::core::params::alignment::Alignment;
 use crate::core::params::background::Background;
 use crate::core::params::frame_cut::FrameCut;
 use crate::core::params::values::Values;
@@ -17,10 +18,12 @@ use crate::core::params::threshold::Threshold;
 #[command(arg_required_else_help = true)]
 pub struct Cli {
     /// Path to png|jpg|jpeg|gif file
-    pub path: PathBuf,
+    #[arg(value_name = "source")]
+    pub source_path: PathBuf,
 
-    /// Target path to the 'dolphin' directory, if the gif passed
-    pub target: Option<PathBuf>,
+    /// Path to the 'dolphin' directory, if the gif passed
+    #[arg(value_name = "dolphin")]
+    pub dolphin_path: Option<PathBuf>,
 
     /// Sets the height of output frame(s)
     #[arg(
@@ -49,7 +52,7 @@ pub struct Cli {
     pub only_preview: bool,
 
     /// Preview scale ratio
-    #[arg(long = "ps", default_value_t = 3)]
+    #[arg(long = "ps", default_value_t = 3, value_name = "multiplier")]
     pub preview_scale: u8,
 
     /// Inverse output pixels
