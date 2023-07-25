@@ -106,9 +106,10 @@ fn for_each_luminance<F>(
 
 fn resize(image: &RgbaImage, params: &Params) -> GrayImage {
     let dynamic = DynamicImage::from(image.clone());
+    let size = (params.width as u32, params.height as u32);
     let resized = match params.scale_type {
-        ScaleType::Fill => dynamic.resize_to_fill(params.width as u32, params.height as u32, FilterType::Nearest),
-        ScaleType::Fit => dynamic.resize(params.width as u32, params.height as u32, FilterType::Nearest),
+        ScaleType::Fit => dynamic.resize(size.0, size.1, FilterType::Nearest),
+        ScaleType::Fill => dynamic.resize_to_fill(size.0, size.1, FilterType::Nearest),
     };
     return resized.to_luma8();
 }
