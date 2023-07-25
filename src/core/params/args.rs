@@ -36,12 +36,9 @@ pub struct Cli {
     )]
     pub height: u8,
 
-    /// Scale type [default: fit-bottom]
-    #[arg(long = "st", value_name = "type")]
-    pub scale_type: Option<ScaleType>,
-    // thread 'main' has overflowed its stack
-    // fatal runtime error: stack overflow
-    // caused by default_value_t = ScaleType::FitBottom
+    /// Scale type
+    #[arg(long = "st", value_name = "type", default_value = "fit-bottom")]
+    pub scale_type: ScaleType,
 
     /// Generate the previews of result pictures
     #[arg(short, long)]
@@ -63,24 +60,24 @@ pub struct Cli {
     #[arg(short, long)]
     pub replace_manifest: bool,
 
-    /// Set background pixels visible [default: invisible]
-    #[arg(short, long, value_name = "background")]
-    pub background: Option<Background>,
+    /// Set background pixels visible
+    #[arg(short, long, value_name = "background", default_value = "invisible")]
+    pub background: Background,
     // thread 'main' has overflowed its stack
     // fatal runtime error: stack overflow
     // caused by default_value_t = Background::Invisible
 
-    /// Threshold value or range of pixel brightness as a percentage, such as 20:80, 40:, :60, 50:50 or 50 [default: 20:80]
-    #[arg(short, long, value_name = "percentage[:percentage]", value_parser = str_to_threshold)]
-    pub threshold: Option<Threshold>,
+    /// Threshold value or range of pixel brightness as a percentage, such as 20:80, 40:, :60, 50:50 or 50
+    #[arg(short, long, value_name = "percentage[:percentage]", value_parser = str_to_threshold, default_value = "20:80")]
+    pub threshold: Threshold,
 
     /// Animation speed ratio
     #[arg(short, long, value_name = "speed", default_value_t = 1.0, value_parser = str_to_speed)]
     pub speed: f32,
 
-    /// Drop some frames from the start and from the end. For example 5:, :8 or 2:3, the last one drops 2 frames from start and 3 from the end. [default: 0:0]
-    #[arg(short, long, value_name = "count[:count]", value_parser = str_to_frame_cut)]
-    pub cut: Option<FrameCut>,
+    /// Drop some frames from the start and from the end. For example 5:, :8 or 2:3, the last one drops 2 frames from start and 3 from the end.
+    #[arg(short, long, value_name = "count[:count]", value_parser = str_to_frame_cut, default_value = "0:0")]
+    pub cut: FrameCut,
 }
 
 fn str_to_threshold(value: &str) -> Result<Threshold, String> {
