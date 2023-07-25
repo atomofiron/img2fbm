@@ -52,12 +52,20 @@ fn process_outside_and_inverting(
     bitmap: &mut Bitmap,
     background: Background,
 ) {
+    let height_dif = bitmap.height as u32 - resized.height();
+    let width_dif = bitmap.width as u32 - resized.width();
+    // if the source width or height is odd and alignment is centered,
+    // number of outside pixels is above=below+1 and on the left=on the right+1
+    let top_edge = height_dif / 2 + height_dif % 2;
+    let bottom_edge = bitmap.height as u32 - height_dif / 2;
+    let left_edge = width_dif / 2 + width_dif % 2;
+    let right_edge = bitmap.width as u32 - width_dif / 2;
     for_each_luminance(resized, bitmap, |bitmap, x, y, outside, luminance| {
         match () {
             _ if !outside => (),
             _ if background == Background::Visible => bitmap.set(x, y),
-            _ if background == Background::Start && x < (bitmap.width as u32 / 2) => bitmap.set(x, y),
-            _ if background == Background::End && x > (bitmap.width as u32 / 2) => bitmap.set(x, y),
+            _ if background == Background::Start && (x < left_edge || y < top_edge) => bitmap.set(x, y),
+            _ if background == Background::End && (x >= right_edge || y >= bottom_edge) => bitmap.set(x, y),
             _ => (),
         }
     });
