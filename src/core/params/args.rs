@@ -40,6 +40,10 @@ pub struct Cli {
     #[arg(long = "st", value_name = "type", default_value = "fit-bottom")]
     pub scale_type: ScaleType,
 
+    /// Applied alignment if the source picture has aspect ratio different from the target
+    #[arg(short, long, value_name = "side", default_value = "bottom")]
+    pub alignment: Alignment,
+
     /// Generate the previews of result pictures
     #[arg(short, long)]
     pub preview: bool,

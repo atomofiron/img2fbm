@@ -5,3 +5,4 @@ pub mod scale_type;
 pub mod threshold;
 pub mod frame_cut;
 pub mod background;
+pub mod alignment;

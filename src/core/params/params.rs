@@ -1,5 +1,6 @@
 use std::fmt::Display;
 use clap::Parser;
+use crate::core::params::alignment::Alignment;
 use crate::core::params::args::Cli;
 use crate::core::params::background::Background;
 use crate::core::params::frame_cut::FrameCut;
@@ -26,6 +27,7 @@ pub struct Params {
     pub threshold: Threshold,
     pub cut: FrameCut,
     pub scale_type: ScaleType,
+    pub alignment: Alignment,
     pub speed: f32,
     pub with_manifest: bool,
     pub replace_manifest: bool,
@@ -80,6 +82,7 @@ impl Params {
             threshold: cli.threshold,
             cut: cli.cut,
             scale_type: cli.scale_type,
+            alignment: cli.alignment,
             speed: cli.speed,
             with_manifest: cli.dolphin_path.is_some(),
             replace_manifest: cli.replace_manifest,
