@@ -4,19 +4,18 @@ use clap::ValueEnum;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScaleType {
-    FillCenter, FitCenter, FitBottom
+    Fill, Fit
 }
 
 impl ValueEnum for ScaleType {
     fn value_variants<'a>() -> &'a [Self] {
-        &[ScaleType::FillCenter, ScaleType::FitCenter, ScaleType::FitBottom]
+        &[ScaleType::Fill, ScaleType::Fit]
     }
 
     fn to_possible_value<'a>(&self) -> Option<PossibleValue> {
         Some(match self {
-            ScaleType::FillCenter => PossibleValue::new("fill-center").help("Scale to fill animation bounds"),
-            ScaleType::FitCenter => PossibleValue::new("fit-center").help("Scale to fit in animation bounds"),
-            ScaleType::FitBottom => PossibleValue::new("fit-bottom").help("Scale to fit in animation bounds and align bottom"),
+            ScaleType::Fill => PossibleValue::new("fill").help("Scale to fill animation bounds"),
+            ScaleType::Fit => PossibleValue::new("fit").help("Scale to fit in animation bounds"),
         })
     }
 }

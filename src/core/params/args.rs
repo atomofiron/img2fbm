@@ -37,7 +37,7 @@ pub struct Cli {
     pub height: u8,
 
     /// Scale type
-    #[arg(long = "st", value_name = "type", default_value = "fit-bottom")]
+    #[arg(long = "st", value_name = "type", default_value = "fit")]
     pub scale_type: ScaleType,
 
     /// Applied alignment if the source picture has aspect ratio different from the target

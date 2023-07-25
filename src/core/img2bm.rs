@@ -13,11 +13,7 @@ const MAX_RADIUS: f32 = 4.0;
 
 pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
     let resized = resize(image, params);
-    let resized_height = resized.height() as i32;
-    let output_height = match params.scale_type {
-        ScaleType::FillCenter | ScaleType::FitBottom => resized_height,
-        ScaleType::FitCenter => resized_height + (params.height as i32 - resized_height) / 2,
-    };
+    let output_height = resized.height() as i32;
     let mut bitmap = Bitmap::new(params.width, output_height as u8);
     if params.threshold.dark > 0.0 {
         process_dark(params, &resized, &mut bitmap);
@@ -111,8 +107,8 @@ fn for_each_luminance<F>(
 fn resize(image: &RgbaImage, params: &Params) -> GrayImage {
     let dynamic = DynamicImage::from(image.clone());
     let resized = match params.scale_type {
-        ScaleType::FillCenter => dynamic.resize_to_fill(params.width as u32, params.height as u32, FilterType::Nearest),
-        ScaleType::FitCenter | ScaleType::FitBottom => dynamic.resize(params.width as u32, params.height as u32, FilterType::Nearest),
+        ScaleType::Fill => dynamic.resize_to_fill(params.width as u32, params.height as u32, FilterType::Nearest),
+        ScaleType::Fit => dynamic.resize(params.width as u32, params.height as u32, FilterType::Nearest),
     };
     return resized.to_luma8();
 }
