@@ -56,8 +56,8 @@ fn process_outside_and_inverting(
         match () {
             _ if !outside => (),
             _ if background == Background::Visible => bitmap.set(x, y),
-            _ if background == Background::Left && x < (bitmap.width as u32 / 2) => bitmap.set(x, y),
-            _ if background == Background::Right && x > (bitmap.width as u32 / 2) => bitmap.set(x, y),
+            _ if background == Background::Start && x < (bitmap.width as u32 / 2) => bitmap.set(x, y),
+            _ if background == Background::End && x > (bitmap.width as u32 / 2) => bitmap.set(x, y),
             _ => (),
         }
     });

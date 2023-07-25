@@ -4,19 +4,19 @@ use clap::ValueEnum;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Background {
-    Invisible, Left, Right, Visible,
+    Invisible, Start, End, Visible,
 }
 
 impl ValueEnum for Background {
     fn value_variants<'a>() -> &'a [Self] {
-        &[Background::Invisible, Background::Left, Background::Right, Background::Visible]
+        &[Background::Invisible, Background::Start, Background::End, Background::Visible]
     }
 
     fn to_possible_value<'a>(&self) -> Option<PossibleValue> {
         Some(match self {
             Background::Invisible => PossibleValue::new("invisible").help("Keep transparent, white, unset, zero"),
-            Background::Left => PossibleValue::new("left").help("Make visible on the right side"),
-            Background::Right => PossibleValue::new("right").help("Make visible on the left side"),
+            Background::Start => PossibleValue::new("start").help("Make visible on the left or top side"),
+            Background::End => PossibleValue::new("end").help("Make visible on the right or bottom side"),
             Background::Visible => PossibleValue::new("visible").help("Make visible, black, set, unit"),
         })
     }
