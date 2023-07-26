@@ -11,14 +11,14 @@ https://github.com/Atomofiron/img2fbm/assets/14147217/59cbb785-d17d-46e0-a8fe-b8
 ```
 Flipper bitmap files generator
 
-Usage: img2fbm [OPTIONS] <INPUT> [DOLPHIN]
+Usage: img2fbm [OPTIONS] <source> [dolphin]
 
 Arguments:
-  <INPUT>
+  <source>
           Path to png|jpg|jpeg|gif file
 
-  [DOLPHIN]
-          Target path to the 'dolphin' directory, if the gif passed
+  [dolphin]
+          Path to the 'dolphin' directory, if the gif passed
 
 Options:
   -H, --height <1-64>
@@ -28,13 +28,23 @@ Options:
 
       --st <type>
           Scale type
+          
+          [default: fit]
 
           Possible values:
-          - fill-center: Scale to fill animation bounds
-          - fit-center:  Scale to fit in animation bounds
-          - fit-bottom:  Scale to fit in animation bounds and align bottom
+          - fill: Scale to fill animation bounds
+          - fit:  Scale to fit in animation bounds
 
-          [default: fit-bottom]
+  -a, --alignment <side>
+          Applied alignment if the source picture has aspect ratio different from the target
+          
+          [default: bottom]
+
+          Possible values:
+          - left:   Align source picture to left
+          - top:    Align source picture to top
+          - right:  Align source picture to right
+          - bottom: Align source picture to bottom
 
   -p, --preview
           Generate the previews of result pictures
@@ -42,7 +52,7 @@ Options:
       --op
           Only preview, do not generate .bm and other Flipper Animation files
 
-      --ps <PS>
+      --ps <multiplier>
           Preview scale ratio
           
           [default: 3]
@@ -55,18 +65,18 @@ Options:
 
   -b, --background <background>
           Set background pixels visible
+          
+          [default: invisible]
 
           Possible values:
           - invisible: Keep transparent, white, unset, zero
-          - left:      Make visible on the right side
-          - right:     Make visible on the left side
+          - start:     Make visible on the left or top side
+          - end:       Make visible on the right or bottom side
           - visible:   Make visible, black, set, unit
-
-          [default: invisible]
 
   -t, --threshold <percentage[:percentage]>
           Threshold value or range of pixel brightness as a percentage, such as 20:80, 40:, :60, 50:50 or 50
-
+          
           [default: 20:80]
 
   -s, --speed <speed>
@@ -75,8 +85,8 @@ Options:
           [default: 1]
 
   -c, --cut <count[:count]>
-          Drop some frames from the start and from the end. For example 5:, :8 or 2:3, the last one drops 2 frames from start and 3 from the end.
-
+          Drop some frames from the start and from the end. For example 5:, :8 or 2:3, the last one drops 2 frames from start and 3 from the end
+          
           [default: 0:0]
 ```
 </details>
