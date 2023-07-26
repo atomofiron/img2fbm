@@ -3,18 +3,19 @@ use image::{DynamicImage, GrayImage, RgbaImage};
 use image::imageops::FilterType;
 use crate::core::params::background::Background;
 use crate::core::bitmap::Bitmap;
+use crate::core::params::alignment::Alignment;
 use crate::core::params::params::Params;
 use crate::core::params::scale_type::ScaleType;
 use crate::core::params::threshold::Threshold;
 use crate::ext::range_ext::for_each;
+use crate::ext::image_ext::Resizing;
 
 
 const MAX_RADIUS: f32 = 4.0;
 
 pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
-    let resized = resize(image, params);
-    let output_height = resized.height() as i32;
-    let mut bitmap = Bitmap::new(params.width, output_height as u8);
+    let resized = resize(image, params).to_luma8();
+    let mut bitmap = create_bitmap(&resized, params);
     if params.threshold.dark > 0.0 {
         process_dark(params, &resized, &mut bitmap);
     }
@@ -33,6 +34,24 @@ pub fn img2bm(image: &RgbaImage, params: &Params) -> Bitmap {
         bitmap.invert();
     }
     return bitmap;
+}
+
+fn create_bitmap(image: &GrayImage, params: &Params) -> Bitmap {
+    let mut dx = 0;
+    if params.alignment != Alignment::Left {
+        dx = image.width() as i32 - params.width as i32;
+    }
+    if params.alignment != Alignment::Right {
+        dx = dx / 2 + dx % 2;
+    }
+    let mut dy = 0;
+    if params.alignment != Alignment::Top {
+        dy = image.height() as i32 - params.height as i32;
+    }
+    if params.alignment != Alignment::Bottom {
+        dy = dy / 2 + dy % 2;
+    }
+    return Bitmap::new(params.width, params.height, dx, dy);
 }
 
 fn process_dark(params: &Params, resized: &GrayImage, bitmap: &mut Bitmap) {
@@ -86,32 +105,29 @@ fn for_each_luminance<F>(
     image: &GrayImage,
     bitmap: &mut Bitmap,
     mut action: F,
-) where F: FnMut(&mut Bitmap, u32, u32, bool/*is outside*/, f32) {
+) where F: FnMut(&mut Bitmap, u32, u32, /*outside:*/bool, /*luminance:*/f32) {
     let width = bitmap.width;
     let height = bitmap.height;
     for_each(0..height as u32, 0..width as u32, |x,y| {
         if bitmap.get(x, y) { return; }
-        let bitmap_width = bitmap.width as u32;
-        let dif = bitmap_width - image.width();
-        let left = dif / 2;
-        let right = bitmap_width - left - dif % 2;
-        if x < left || x >= right {
+        let src_x = bitmap.get_src_x(x);
+        let src_y = bitmap.get_src_y(y);
+        if src_x < 0 || src_x >= image.width() as i32 || src_y < 0 || src_y >= image.height() as i32 {
             action(bitmap, x, y, true, 0.0);
             return;
         }
-        let luminance = image.get_pixel(x - left, y).0[0] as f32 / 255.0;
+        let luminance = image.get_pixel(src_x as u32, src_y as u32).0[0] as f32 / 255.0;
         action(bitmap, x, y, false, luminance);
     });
 }
 
-fn resize(image: &RgbaImage, params: &Params) -> GrayImage {
+fn resize(image: &RgbaImage, params: &Params) -> DynamicImage {
     let dynamic = DynamicImage::from(image.clone());
-    let size = (params.width as u32, params.height as u32);
-    let resized = match params.scale_type {
-        ScaleType::Fit => dynamic.resize(size.0, size.1, FilterType::Nearest),
-        ScaleType::Fill => dynamic.resize_to_fill(size.0, size.1, FilterType::Nearest),
+    let fill = match params.scale_type {
+        ScaleType::Fill => true,
+        ScaleType::Fit => false,
     };
-    return resized.to_luma8();
+    return Resizing::resize(&dynamic, params.width as u32, params.height as u32, fill, FilterType::Nearest);
 }
 
 pub fn find_in_radius(bitmap: &Bitmap, luminance: f32, x: i32, y: i32) -> bool {
