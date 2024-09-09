@@ -75,7 +75,7 @@ fn process_outside_and_inverting(
     let bottom_edge = bitmap.height as u32 - height_dif / 2;
     let left_edge = width_dif / 2 + width_dif % 2;
     let right_edge = bitmap.width as u32 - width_dif / 2;
-    for_each_luminance(resized, bitmap, |bitmap, x, y, outside, luminance| {
+    for_each_luminance(resized, bitmap, |bitmap, x, y, outside, /*luminance*/_| {
         match () {
             _ if !outside => (),
             _ if background == Background::Visible => bitmap.set(x, y),

@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 use std::path::PathBuf;
-use clap::{CommandFactory, Parser};
-use regex::Regex;
+use clap::Parser;
 use crate::core::params::alignment::Alignment;
 use crate::core::params::background::Background;
 use crate::core::params::frame_cut::FrameCut;

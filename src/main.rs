@@ -5,10 +5,9 @@ use std::fs::{create_dir_all, File, OpenOptions};
 use std::fs;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::io::{Read, Write};
+use std::io::{BufReader, Write};
 use std::path::Path;
-use clap::{Parser, Arg, ArgAction, ArgMatches, Command, CommandFactory};
-use image::{ColorType, Delay, DynamicImage, Frame, GrayImage, ImageFormat, Luma};
+use image::{AnimationDecoder, ColorType, Delay, DynamicImage, Frame, GrayImage, ImageFormat, Luma};
 use crate::core::bitmap::Bitmap;
 use crate::core::img2bm::img2bm;
 
@@ -59,7 +58,8 @@ fn from_gif(params: &Params) {
         create_dir_all(params.dolphin_anim_path.as_str()).unwrap();
     }
     let file = File::open(params.path_src.clone()).unwrap();
-    let mut decoder = GifDecoder::new(file).unwrap();
+    let reader = BufReader::new(file);
+    let mut decoder = GifDecoder::new(reader).unwrap();
     let mut hashes = Vec::<u64>::new();
     let mut data = Vec::<FrameData>::new();
     let mut min_duration = -1f32;
