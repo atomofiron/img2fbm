@@ -12,7 +12,6 @@ use crate::core::bitmap::Bitmap;
 use crate::core::img2bm::img2bm;
 
 use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
-use image::AnimationDecoder;
 use indicatif::{ProgressBar, ProgressStyle};
 use crate::core::meta::{FrameData, get_manifest, get_meta};
 use crate::core::params::params::{FileType, Params};
