@@ -6,6 +6,7 @@ use std::fs;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::io::{BufReader, Write};
+use std::ops::Shl;
 use std::path::Path;
 use image::{AnimationDecoder, ColorType, Delay, DynamicImage, Frame, GrayImage, ImageFormat, Luma};
 use crate::core::bitmap::Bitmap;
@@ -164,6 +165,50 @@ fn bm2preview(bitmap: &Bitmap, scale: u32) -> GrayImage {
         }
     }
     return image;
+}
+
+fn bm2oled_h(bitmap: &Bitmap) -> String {
+    let mut bytes = vec![];
+    let width = bitmap.width as u32;
+    let height = bitmap.height as u32;
+    for y in 0..(height / 8) {
+        let y = y * 8;
+        for x in 0..width {
+            let mut byte = 0u8;
+            for dy in 0..8 {
+                if bitmap.get(x, y + dy) {
+                    byte |= 1u8.shl(dy);
+                }
+            }
+            bytes.push(byte);
+        }
+    }
+    return bytes.iter()
+        .map(|b| format!("{:#04X}", b))
+        .collect::<Vec<String>>()
+        .join(", ");
+}
+
+fn bm2oled_v(bitmap: &Bitmap) -> String {
+    let mut bytes = vec![];
+    let width = bitmap.width as u32;
+    let height = bitmap.height as u32;
+    for x in 0..(width / 8) {
+        let x = x * 8;
+        for y in (0..height).rev() {
+            let mut byte = 0u8;
+            for dx in 0..8 {
+                if bitmap.get(x + dx, y) {
+                    byte |= 1u8.shl(dx);
+                }
+            }
+            bytes.push(byte);
+        }
+    }
+    return bytes.iter()
+        .map(|b| format!("{:#04X}", b))
+        .collect::<Vec<String>>()
+        .join(", ");
 }
 
 fn save_preview(img: &GrayImage, name: &str) {
