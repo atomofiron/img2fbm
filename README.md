@@ -100,8 +100,7 @@ From [Releases](https://github.com/Atomofiron/img2fbm/releases)
 <br>:white_check_mark: Windows x86_64
 
 # Samples
-<img src=https://github.com/Atomofiron/img2fbm/assets/14147217/efc04271-4cea-4a58-878a-38c83db58200 height=64 alt=yuno-eyes />
-<img src=https://github.com/Atomofiron/img2fbm/assets/14147217/a2160d4e-5e24-414e-8a72-fc67b410df87 height=64 alt=yuno-eyes_preview />
+<img src=https://github.com/Atomofiron/img2fbm/assets/14147217/efc04271-4cea-4a58-878a-38c83db58200 height=64 alt=yuno-eyes /> <img src=https://github.com/Atomofiron/img2fbm/assets/14147217/a2160d4e-5e24-414e-8a72-fc67b410df87 height=64 alt=yuno-eyes_preview />
 <br>
 <img src=https://github.com/Atomofiron/img2fbm/assets/14147217/a29d019b-a75c-407d-b957-3228ffdac3af height=64 alt=yuno-whisper />
 <img src=https://github.com/Atomofiron/img2fbm/assets/14147217/5a5f8b1f-a6a6-4f21-8c67-09d4f9a73753 height=64 alt=yuno-whisper_preview />
