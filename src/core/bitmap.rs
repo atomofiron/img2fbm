@@ -39,15 +39,15 @@ impl Bitmap {
     }
 
     pub fn get_src_x(&self, dst_x: u32) -> i32 {
-        dst_x as i32  + self.dx
+        dst_x as i32 + self.dx
     }
 
     pub fn get_src_y(&self, dst_y: u32) -> i32 {
-        dst_y as i32  + self.dy
+        dst_y as i32 + self.dy
     }
 
     fn get_indexes(&self, x: u32, y: u32) -> (usize, usize) {
         let offset = (self.width as u32 * y + x) as usize;
-        ((offset / 8 + 1), (7 - offset % 8))
+        (offset / 8 + 1, offset % 8)
     }
 }
