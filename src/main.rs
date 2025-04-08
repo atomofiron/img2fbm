@@ -40,7 +40,7 @@ fn from_picture(params: &Params) {
 }
 
 fn new_progress(length: usize, prefix: &str) -> ProgressBar {
-    let mut progressbar = ProgressBar::new(length as u64);
+    let progressbar = ProgressBar::new(length as u64);
     progressbar.set_prefix(String::from(prefix));
     progressbar.set_message("done");
     let style = ProgressStyle::with_template("{spinner:.white} {prefix} {msg} [{bar:.white/white}] {pos}/{len}")
@@ -58,7 +58,7 @@ fn from_gif(params: &Params) {
     }
     let file = File::open(params.path_src.clone()).unwrap();
     let reader = BufReader::new(file);
-    let mut decoder = GifDecoder::new(reader).unwrap();
+    let decoder = GifDecoder::new(reader).unwrap();
     let mut hashes = Vec::<u64>::new();
     let mut data = Vec::<FrameData>::new();
     let mut min_duration = -1f32;
