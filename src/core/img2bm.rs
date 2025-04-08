@@ -123,11 +123,11 @@ fn for_each_luminance<F>(
 
 fn resize(image: &RgbaImage, params: &Params) -> DynamicImage {
     let dynamic = DynamicImage::from(image.clone());
-    let fill = match params.scale_type {
+    let scale_type = match params.scale_type {
         ScaleType::Fill => true,
         ScaleType::Fit => false,
     };
-    return Resizing::resize(&dynamic, params.width as u32, params.height as u32, fill, FilterType::Nearest);
+    return Resizing::resize(&dynamic, params.width as u32, params.height as u32, scale_type, FilterType::Nearest);
 }
 
 pub fn find_in_radius(bitmap: &Bitmap, luminance: f32, x: i32, y: i32) -> bool {
