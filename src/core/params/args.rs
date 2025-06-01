@@ -20,7 +20,7 @@ pub struct Cli {
     #[arg(value_name = "source")]
     pub source_path: PathBuf,
 
-    /// Path to the 'dolphin' directory, if the gif passed
+    /// Path to the 'dolphin' directory, if the GIF passed
     #[arg(value_name = "dolphin")]
     pub dolphin_path: Option<PathBuf>,
 
@@ -39,7 +39,7 @@ pub struct Cli {
     #[arg(long = "st", value_name = "type", default_value = "fit")]
     pub scale_type: ScaleType,
 
-    /// Applied alignment if the source picture has aspect ratio different from the target
+    /// Applied alignment if the source picture has an aspect ratio different from the target
     #[arg(short, long, value_name = "side", default_value = "bottom")]
     pub alignment: Alignment,
 
@@ -59,7 +59,7 @@ pub struct Cli {
     #[arg(short, long)]
     pub inverse: bool,
 
-    /// Replace dolphin/manifest.txt file with a new one.
+    /// Replace a dolphin/manifest.txt file with a new one.
     #[arg(short, long)]
     pub replace_manifest: bool,
 
@@ -78,7 +78,7 @@ pub struct Cli {
     #[arg(short, long, value_name = "speed", default_value_t = 1.0, value_parser = str_to_speed)]
     pub speed: f32,
 
-    /// Drop some frames from the start and from the end. For example 5:, :8 or 2:3, the last one drops 2 frames from start and 3 from the end.
+    /// Drop some frames from the start and from the end. For example, 5:, :8 or 2:3, the last one drops 2 frames from start and 3 from the end.
     #[arg(short, long, value_name = "count[:count]", value_parser = str_to_frame_cut, default_value = "0:0")]
     pub cut: FrameCut,
 }
@@ -101,7 +101,7 @@ fn str_to_frame_cut(value: &str) -> Result<FrameCut, String> {
 fn str_to_speed(value: &str) -> Result<f32, String> {
     let value = value.parse::<f32>().map_err(|err| err.to_string())?;
     if value <= 0.0 {
-        panic!("Invalid speed ratio, must greater then 0");
+        panic!("Invalid speed ratio must be greater than 0");
     }
     return Ok(value);
 }
