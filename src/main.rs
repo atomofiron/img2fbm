@@ -1,24 +1,48 @@
 mod core;
 mod ext;
 
-use std::fs::{create_dir_all, File, OpenOptions};
-use std::fs;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use std::io::{BufReader, Write};
-use std::path::Path;
-use image::{AnimationDecoder, ColorType, Delay, DynamicImage, Frame, GrayImage, ImageFormat, Luma};
 use crate::core::bitmap::Bitmap;
 use crate::core::img2bm::img2bm;
-
-use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
-use indicatif::{ProgressBar, ProgressStyle};
-use crate::core::meta::{FrameData, get_manifest, get_meta};
+use crate::core::meta::{get_manifest, get_meta, FrameData};
 use crate::core::params::params::{FileType, Params};
+use crate::ext::unit_ext::UnitUtil;
+use image::codecs::gif::{GifDecoder, GifEncoder, Repeat};
+use image::{AnimationDecoder, ColorType, Delay, DynamicImage, Frame, GrayImage, ImageFormat, Luma};
+use indicatif::{ProgressBar, ProgressStyle};
+use std::collections::hash_map::DefaultHasher;
+use std::fs;
+use std::fs::{create_dir_all, File, OpenOptions};
+use std::hash::{Hash, Hasher};
+use std::io::{stdin, BufReader, Write};
+use std::path::Path;
 
 
 fn main() {
-    let params = Params::parse();
+    if std::env::args().len() > 1 {
+        work(Params::try_parse().unwrap());
+    } else {
+        Params::print_help();
+        looped_work();
+    }
+}
+
+fn looped_work() {
+    print!("input parameters or press Enter to exit: ").flush();
+    let mut line = String::new();
+    stdin().read_line(&mut line).unwrap();
+    if line.trim().len() > 1 {
+        match Params::try_parse_from(line) {
+            Ok(o) => {
+                work(o);
+                println!("it's done! another one?")
+            },
+            Err(msg) => println!("{msg}"),
+        };
+        looped_work()
+    }
+}
+
+fn work(params: Params) {
     match params.file_type {
         FileType::Picture => from_picture(&params),
         FileType::Gif => from_gif(&params),

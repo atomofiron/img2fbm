@@ -9,3 +9,4 @@ edition = "2021"
 image = "0.25.2"
 clap = { version = "4.3.19", features = ["derive"] }
 indicatif = "0.17.5"
+shell-words = "1.1.0"

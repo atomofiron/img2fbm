@@ -6,6 +6,7 @@ pub trait Resizing {
 }
 
 impl Resizing for DynamicImage {
+
     fn resize(&self, to_width: u32, to_height: u32, fill: bool, filter: FilterType) -> Self {
         let (width, height) = resize_dimensions(self.width(), self.height(), to_width, to_height, fill);
         return self.resize_exact(width, height, filter);

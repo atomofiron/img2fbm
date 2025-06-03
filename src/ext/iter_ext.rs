@@ -8,6 +8,7 @@ pub trait Sum<T> {
 }
 
 impl<'a, T> Sum<T> for Iter<'a, T> {
+
     fn sum_of<R, F>(&self, init: R, block: F) -> R where F: Fn(&'a T) -> R, R: AddAssign {
         let mut sum: R = init;
         for it in self.to_owned() {
@@ -15,6 +16,7 @@ impl<'a, T> Sum<T> for Iter<'a, T> {
         }
         return sum;
     }
+
     fn min_of<R, F>(&self, init: R, block: F) -> R where F: Fn(&'a T) -> R, R: Ord + Eq + Copy {
         let mut min: R = init;
         for it in self.to_owned() {
@@ -25,6 +27,7 @@ impl<'a, T> Sum<T> for Iter<'a, T> {
         }
         return min;
     }
+
     fn max_of<R, F>(&self, init: R, block: F) -> R where F: Fn(&'a T) -> R, R: Ord {
         let mut max: R = init;
         for it in self.to_owned() {

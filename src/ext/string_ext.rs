@@ -9,6 +9,7 @@ pub trait StringUtil {
 }
 
 impl StringUtil for String {
+
     fn substring(&self, range: Range<usize>) -> Self {
         String::from(&self[range])
     }

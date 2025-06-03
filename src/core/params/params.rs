@@ -1,5 +1,8 @@
 use std::fmt::Display;
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use clap::Error;
+use clap::error::ErrorKind;
+use ErrorKind::InvalidValue;
 use crate::core::params::alignment::Alignment;
 use crate::core::params::args::Cli;
 use crate::core::params::background::Background;
@@ -48,15 +51,29 @@ pub struct Params {
 
 impl Params {
 
-    pub fn parse() -> Params {
-        let cli = Cli::parse();
-        cli.source_path.extension().expect("invalid input file");
-        cli.source_path.file_name().expect("invalid input file path");
+    pub fn print_help() {
+        Cli::command().print_help().unwrap();
+    }
+
+    pub fn try_parse() -> Result<Params, Error> {
+        return Params::from(Cli::parse());
+    }
+
+    pub fn try_parse_from(string: String) -> Result<Params, Error> {
+        let mut args = shell_words::split(string.as_str()).expect("wrong arguments format");
+        args.insert(0, "stub".to_string());
+        let cli = Cli::try_parse_from(args)?;
+        return Params::from(cli);
+    }
+
+    pub fn from(cli: Cli) -> Result<Params, Error> {
+        cli.source_path.extension().ok_or(Error::raw(InvalidValue, "invalid input file"))?;
+        cli.source_path.file_name().ok_or(Error::raw(InvalidValue, "invalid input file path"))?;
         let input_ext = cli.source_path.get_ext().to_lowercase();
         let file_type = match () {
             _ if EXT_PICTURE.contains(&&*input_ext) => FileType::Picture,
             _ if input_ext == EXT_GIF => FileType::Gif,
-            _ => panic!("invalid input file format"),
+            _ => return Err(Error::raw(InvalidValue, "invalid input file format")),
         };
         let path_name = cli.source_path.get_path_name();
         let preview_path_name = format!("{}_preview", cli.source_path.get_path_name());
@@ -70,7 +87,7 @@ impl Params {
         let dolphin_anim_path = format!("{dolphin_path}{dolphin_anim_name}/");
         let meta_path = format!("{dolphin_anim_path}meta.txt");
         let manifest_path = format!("{dolphin_path}manifest.txt");
-        Params {
+        let params = Params {
             file_type,
             width: TARGET_WIDTH,
             height: cli.height,
@@ -99,7 +116,8 @@ impl Params {
             dolphin_anim_path,
             meta_path,
             manifest_path,
-        }
+        };
+        return Ok(params);
     }
 
     pub fn path_bm<I>(&self, index: I) -> String where I: Display {
